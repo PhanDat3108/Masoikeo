@@ -9,26 +9,29 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
         .container { max-width: 500px; width: 100%; }
         .card { background: var(--card-bg); border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        h2, h3 { color: var(--primary); text-transform: uppercase; text-align: center; }
+        h2, h3 { color: var(--primary); text-transform: uppercase; text-align: center; margin-top: 0; }
         
         /* Input & Button */
         input, select { background: #2a2a32; border: 1px solid #444; color: white; padding: 12px; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
-        button { border: none; padding: 12px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-main { background: var(--primary); color: white; width: 100%; }
+        button { border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-main { background: var(--primary); color: white; width: 100%; padding: 15px; }
         .btn-ready { background: #27ae60; color: white; }
         .btn-out { background: #7f8c8d; color: white; }
-        .btn-kill { background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 5px 10px; }
+        .btn-kill { background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 4px 8px; font-size: 12px; }
+        .btn-kick { background: transparent; border: 1px solid #7f8c8d; color: #7f8c8d; padding: 4px 8px; font-size: 12px; margin-left: 5px; }
+        .btn-kick:hover { background: #c0392b; color: white; border-color: #c0392b; }
 
         /* User List */
-        .player-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; }
+        .player-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 5px; border-bottom: 1px solid #333; }
         .is-dead { opacity: 0.4; text-decoration: line-through; }
         .badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; background: #444; margin-right: 5px; }
+        .role-tag { font-size: 11px; color: #f1c40f; background: rgba(241, 196, 15, 0.1); padding: 2px 6px; border-radius: 4px; margin-left: 5px; border: 1px solid rgba(241, 196, 15, 0.3); }
         
         /* Role Settings */
         .role-config-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background: #2a2a32; padding: 8px; border-radius: 6px; }
         .role-name { flex: 1; font-weight: bold; }
-        .role-count { width: 40px; text-align: center; font-size: 1.2em; }
-        .admin-controls { border-top: 2px solid var(--primary); margin-top: 20px; }
+        .role-count { width: 30px; text-align: center; font-size: 1.1em; }
+        .admin-controls { border-top: 3px solid var(--primary); margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -83,6 +86,11 @@
 
         socket.on('errorMsg', (m) => alert(m));
 
+        socket.on('youAreKicked', () => {
+            alert("Bạn đã bị Quản trò mời ra khỏi phòng!");
+            location.reload(); 
+        });
+
         socket.on('updateState', (s) => {
             state = s;
             const me = state.players.find(p => p.id === socket.id);
@@ -92,31 +100,41 @@
             document.getElementById('game').style.display = 'block';
             document.getElementById('roleDisplay').innerText = me.role;
             
-            // Cập nhật nút trạng thái (Không hiện cho admin)
             const btnStatus = document.getElementById('btnStatus');
             if (me.isAdmin) {
                 btnStatus.style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'block';
                 renderAdminSettings();
             } else {
+                btnStatus.style.display = 'block';
                 btnStatus.innerText = me.isReady ? "THOÁT PHÒNG" : "VÀO PHÒNG";
                 btnStatus.className = me.isReady ? "btn-out" : "btn-ready";
             }
 
-            // Danh sách người chơi
             const playerList = document.getElementById('playerList');
             playerList.innerHTML = '';
             let readyCount = 0;
+
             state.players.forEach(p => {
                 if(p.isReady && !p.isAdmin) readyCount++;
                 const div = document.createElement('div');
                 div.className = `player-row ${p.isAlive ? '' : 'is-dead'}`;
+                
+                // Admin thấy được role của tất cả mọi người
+                const roleInfo = me.isAdmin && p.isReady && !p.isAdmin ? `<span class="role-tag">${p.role}</span>` : '';
+
                 div.innerHTML = `
                     <span>
                         <span class="badge" style="color:${p.isReady?'#27ae60':'#888'}">${p.isReady?'●':'○'}</span>
-                        ${p.name} ${p.isAdmin ? '(QT)' : ''}
+                        <strong>${p.name}</strong> ${p.isAdmin ? '(QT)' : ''}
+                        ${roleInfo}
                     </span>
-                    ${me.isAdmin && !p.isAdmin ? `<button class="btn-kill" onclick="toggleLife('${p.id}')">${p.isAlive?'Giết':'Hồi sinh'}</button>` : ''}
+                    <div style="display: flex;">
+                        ${me.isAdmin && !p.isAdmin ? `
+                            <button class="btn-kill" onclick="toggleLife('${p.id}')">${p.isAlive?'Giết':'Sống'}</button>
+                            <button class="btn-kick" onclick="kick('${p.id}')">Kick</button>
+                        ` : ''}
+                    </div>
                 `;
                 playerList.appendChild(div);
             });
@@ -134,7 +152,7 @@
                     <button onclick="updateCount(${i}, -1)">-</button>
                     <span class="role-count">${r.count}</span>
                     <button onclick="updateCount(${i}, 1)">+</button>
-                    <button onclick="removeRole(${i})" style="color:red; background:none;">✕</button>
+                    <button onclick="removeRole(${i})" style="color:red; background:none; font-size:18px;">✕</button>
                 `;
                 container.appendChild(div);
             });
@@ -152,12 +170,15 @@
             if(!name) return;
             socket.emit('updateConfig', [...state.rolesConfig, {name, count}]);
             document.getElementById('newRoleName').value = '';
+            document.getElementById('newRoleCount').value = 1;
         }
 
         function removeRole(i) {
-            let conf = [...state.rolesConfig];
-            conf.splice(i, 1);
-            socket.emit('updateConfig', conf);
+            if(confirm("Xóa vai trò này?")) {
+                let conf = [...state.rolesConfig];
+                conf.splice(i, 1);
+                socket.emit('updateConfig', conf);
+            }
         }
 
         function toggleStatus() {
@@ -167,8 +188,16 @@
 
         function toggleLife(id) { socket.emit('toggleLife', id); }
 
+        function kick(id) {
+            if(confirm("Bạn có chắc chắn muốn đuổi người chơi này khỏi phòng?")) {
+                socket.emit('kickPlayer', id);
+            }
+        }
+
         function shuffle() {
-            if(confirm("Xác nhận xào bài ván mới?")) socket.emit('shuffleCards');
+            if(confirm("Xác nhận xào bài ván mới và hồi sinh tất cả?")) {
+                socket.emit('shuffleCards');
+            }
         }
     </script>
 </body>
