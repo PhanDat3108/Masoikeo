@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ma Sói Helper Pro</title>
+    <style>
+        :root { --primary: #e74c3c; --bg: #0f0f0f; --card-bg: #1e1e24; --text: #f0f0f0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { max-width: 500px; width: 100%; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h2, h3 { color: var(--primary); text-transform: uppercase; text-align: center; }
+        
+        /* Input & Button */
+        input, select { background: #2a2a32; border: 1px solid #444; color: white; padding: 12px; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+        button { border: none; padding: 12px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-main { background: var(--primary); color: white; width: 100%; }
+        .btn-ready { background: #27ae60; color: white; }
+        .btn-out { background: #7f8c8d; color: white; }
+        .btn-kill { background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 5px 10px; }
+
+        /* User List */
+        .player-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; }
+        .is-dead { opacity: 0.4; text-decoration: line-through; }
+        .badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; background: #444; margin-right: 5px; }
+        
+        /* Role Settings */
+        .role-config-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background: #2a2a32; padding: 8px; border-radius: 6px; }
+        .role-name { flex: 1; font-weight: bold; }
+        .role-count { width: 40px; text-align: center; font-size: 1.2em; }
+        .admin-controls { border-top: 2px solid var(--primary); margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="login" class="card">
+            <h2>🐺 MA SÓI NHÓM KÈO</h2>
+            <input type="text" id="username" placeholder="Nhập tên của bạn...">
+            <button class="btn-main" onclick="join()">VÀO PHÒNG</button>
+        </div>
+
+        <div id="game" style="display:none">
+            <div class="card" id="myRoleCard" style="border-left: 5px solid var(--primary);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <small>Bạn là:</small>
+                        <div id="roleDisplay" style="font-size: 1.5em; font-weight: bold; color: var(--primary);">...</div>
+                    </div>
+                    <button id="btnStatus" onclick="toggleStatus()"></button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Người chơi (<span id="countReady">0</span>)</h3>
+                <div id="playerList"></div>
+            </div>
+
+            <div id="adminPanel" class="card admin-controls" style="display:none">
+                <h3>Cài đặt vai trò</h3>
+                <div id="roleList"></div>
+                
+                <div style="display: flex; gap: 5px; margin-top: 15px;">
+                    <input type="text" id="newRoleName" placeholder="Tên vai trò...">
+                    <input type="number" id="newRoleCount" value="1" style="width: 70px;">
+                    <button class="btn-ready" onclick="addRole()">+</button>
+                </div>
+                
+                <button class="btn-main" onclick="shuffle()" style="margin-top: 20px; font-size: 1.1em;">XÀO BÀI & BẮT ĐẦU</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let state = {};
+
+        function join() {
+            const name = document.getElementById('username').value;
+            if(!name) return;
+            socket.emit('join', name);
+        }
+
+        socket.on('errorMsg', (m) => alert(m));
+
+        socket.on('updateState', (s) => {
+            state = s;
+            const me = state.players.find(p => p.id === socket.id);
+            if (!me) return;
+
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
+            document.getElementById('roleDisplay').innerText = me.role;
+            
+            // Cập nhật nút trạng thái (Không hiện cho admin)
+            const btnStatus = document.getElementById('btnStatus');
+            if (me.isAdmin) {
+                btnStatus.style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                renderAdminSettings();
+            } else {
+                btnStatus.innerText = me.isReady ? "THOÁT PHÒNG" : "VÀO PHÒNG";
+                btnStatus.className = me.isReady ? "btn-out" : "btn-ready";
+            }
+
+            // Danh sách người chơi
+            const playerList = document.getElementById('playerList');
+            playerList.innerHTML = '';
+            let readyCount = 0;
+            state.players.forEach(p => {
+                if(p.isReady && !p.isAdmin) readyCount++;
+                const div = document.createElement('div');
+                div.className = `player-row ${p.isAlive ? '' : 'is-dead'}`;
+                div.innerHTML = `
+                    <span>
+                        <span class="badge" style="color:${p.isReady?'#27ae60':'#888'}">${p.isReady?'●':'○'}</span>
+                        ${p.name} ${p.isAdmin ? '(QT)' : ''}
+                    </span>
+                    ${me.isAdmin && !p.isAdmin ? `<button class="btn-kill" onclick="toggleLife('${p.id}')">${p.isAlive?'Giết':'Hồi sinh'}</button>` : ''}
+                `;
+                playerList.appendChild(div);
+            });
+            document.getElementById('countReady').innerText = readyCount;
+        });
+
+        function renderAdminSettings() {
+            const container = document.getElementById('roleList');
+            container.innerHTML = '';
+            state.rolesConfig.forEach((r, i) => {
+                const div = document.createElement('div');
+                div.className = 'role-config-row';
+                div.innerHTML = `
+                    <span class="role-name">${r.name}</span>
+                    <button onclick="updateCount(${i}, -1)">-</button>
+                    <span class="role-count">${r.count}</span>
+                    <button onclick="updateCount(${i}, 1)">+</button>
+                    <button onclick="removeRole(${i})" style="color:red; background:none;">✕</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updateCount(i, delta) {
+            let conf = [...state.rolesConfig];
+            conf[i].count = Math.max(0, conf[i].count + delta);
+            socket.emit('updateConfig', conf);
+        }
+
+        function addRole() {
+            const name = document.getElementById('newRoleName').value;
+            const count = parseInt(document.getElementById('newRoleCount').value);
+            if(!name) return;
+            socket.emit('updateConfig', [...state.rolesConfig, {name, count}]);
+            document.getElementById('newRoleName').value = '';
+        }
+
+        function removeRole(i) {
+            let conf = [...state.rolesConfig];
+            conf.splice(i, 1);
+            socket.emit('updateConfig', conf);
+        }
+
+        function toggleStatus() {
+            const me = state.players.find(p => p.id === socket.id);
+            socket.emit('setStatus', !me.isReady);
+        }
+
+        function toggleLife(id) { socket.emit('toggleLife', id); }
+
+        function shuffle() {
+            if(confirm("Xác nhận xào bài ván mới?")) socket.emit('shuffleCards');
+        }
+    </script>
+</body>
+</html>
