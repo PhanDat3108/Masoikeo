@@ -78,16 +78,34 @@
         const socket = io();
         let state = {};
 
+        // TỰ ĐỘNG ĐIỀN TÊN CŨ NẾU CÓ
+        window.onload = () => {
+            const savedName = localStorage.getItem('ms_name');
+            if (savedName) document.getElementById('username').value = savedName;
+        };
+
         function join() {
-            const name = document.getElementById('username').value;
-            if(!name) return;
-            socket.emit('join', name);
+            const nameInput = document.getElementById('username').value.trim();
+            if(!nameInput) return;
+
+            // Lấy hoặc Tạo mã định danh bí mật (Secret ID) cho trình duyệt này
+            let secretId = localStorage.getItem('ms_secret_id');
+            if (!secretId) {
+                secretId = 'uid_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('ms_secret_id', secretId);
+            }
+            
+            localStorage.setItem('ms_name', nameInput);
+            
+            // Gửi cả TÊN và ID BÍ MẬT lên server
+            socket.emit('join', { name: nameInput, secretId: secretId });
         }
 
         socket.on('errorMsg', (m) => alert(m));
 
         socket.on('youAreKicked', () => {
             alert("Bạn đã bị Quản trò mời ra khỏi phòng!");
+            localStorage.removeItem('ms_secret_id'); // Xóa ID để không tự vào lại được
             location.reload(); 
         });
 
@@ -120,7 +138,6 @@
                 const div = document.createElement('div');
                 div.className = `player-row ${p.isAlive ? '' : 'is-dead'}`;
                 
-                // Admin thấy được role của tất cả mọi người
                 const roleInfo = me.isAdmin && p.isReady && !p.isAdmin ? `<span class="role-tag">${p.role}</span>` : '';
 
                 div.innerHTML = `

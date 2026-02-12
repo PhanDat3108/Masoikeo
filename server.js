@@ -18,45 +18,54 @@ let gameState = {
 };
 
 io.on('connection', (socket) => {
-    // 1. Tham gia phòng
-    socket.on('join', (name) => {
+    // 1. Tham gia phòng (Dùng data object chứa name và secretId)
+    socket.on('join', (data) => {
+        const { name, secretId } = data;
         let isAdmin = name.toLowerCase() === 'admin';
-        const hasAdmin = gameState.players.some(p => p.isAdmin);
         
-        if (isAdmin && hasAdmin) {
-            socket.emit('errorMsg', 'Đã có Quản trò trong phòng!');
-            return;
-        }
+        // Kiểm tra xem ID này đã tồn tại trong phòng chưa
+        let existingPlayer = gameState.players.find(p => p.secretId === secretId);
 
-        gameState.players.push({ 
-            id: socket.id, 
-            name: isAdmin ? "QUẢN TRÒ" : name.toUpperCase(), 
-            role: isAdmin ? "Quản trò" : "...", 
-            isAlive: true, 
-            isAdmin, 
-            isReady: isAdmin 
-        });
+        if (existingPlayer) {
+            // Nếu là người cũ quay lại: Cập nhật ID socket mới
+            existingPlayer.id = socket.id;
+            existingPlayer.name = isAdmin ? "QUẢN TRÒ" : name.toUpperCase();
+            // Không thay đổi role hay trạng thái sống chết
+        } else {
+            // Nếu là người mới
+            const hasAdmin = gameState.players.some(p => p.isAdmin);
+            if (isAdmin && hasAdmin) {
+                socket.emit('errorMsg', 'Đã có Quản trò trong phòng!');
+                return;
+            }
+
+            gameState.players.push({ 
+                id: socket.id, 
+                secretId: secretId, // Lưu mã bí mật để nhận diện khi reload
+                name: isAdmin ? "QUẢN TRÒ" : name.toUpperCase(), 
+                role: isAdmin ? "Quản trò" : "...", 
+                isAlive: true, 
+                isAdmin, 
+                isReady: isAdmin 
+            });
+        }
         io.emit('updateState', gameState);
     });
 
-    // 2. Vào/Thoát phòng chơi
     socket.on('setStatus', (status) => {
         const player = gameState.players.find(p => p.id === socket.id);
         if (player && !player.isAdmin) {
             player.isReady = status;
-            // Nếu thoát phòng thì reset role luôn cho sạch
             if (!status) player.role = "..."; 
             io.emit('updateState', gameState);
         }
     });
 
-    // 3. Admin chỉnh sửa danh sách Role
     socket.on('updateConfig', (newConfig) => {
         gameState.rolesConfig = newConfig;
         io.emit('updateState', gameState);
     });
 
-    // 4. Admin Kick người chơi
     socket.on('kickPlayer', (targetId) => {
         const me = gameState.players.find(p => p.id === socket.id);
         if (me && me.isAdmin) {
@@ -66,14 +75,12 @@ io.on('connection', (socket) => {
         }
     });
 
-    // 5. Xào bài (Chỉ chia cho người isReady)
     socket.on('shuffleCards', () => {
         let deck = [];
         gameState.rolesConfig.forEach(r => {
             for(let i=0; i < r.count; i++) deck.push(r.name);
         });
         
-        // Thuật toán xào bài Fisher-Yates (đều hơn)
         for (let i = deck.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -82,12 +89,11 @@ io.on('connection', (socket) => {
         let readyPlayers = gameState.players.filter(p => p.isReady && !p.isAdmin);
         readyPlayers.forEach((p, index) => {
             p.role = deck[index] || 'Dân thường (Thừa)';
-            p.isAlive = true; // Reset luôn trạng thái sống khi sang ván mới
+            p.isAlive = true; 
         });
         io.emit('updateState', gameState);
     });
 
-    // 6. Quản lý sống/chết
     socket.on('toggleLife', (targetId) => {
         const target = gameState.players.find(p => p.id === targetId);
         if (target && !target.isAdmin) {
@@ -97,8 +103,9 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        gameState.players = gameState.players.filter(p => p.id !== socket.id);
-        io.emit('updateState', gameState);
+        // Không xóa player ngay lập tức để họ có thể quay lại
+        // Chỉ xóa nếu họ thực sự thoát (kick) hoặc admin reset
+        console.log('Một người vừa rớt mạng tạm thời');
     });
 });
 
