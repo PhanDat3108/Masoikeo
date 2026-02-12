@@ -32,6 +32,7 @@
         .role-name { flex: 1; font-weight: bold; }
         .role-count { width: 30px; text-align: center; font-size: 1.1em; }
         .admin-controls { border-top: 3px solid var(--primary); margin-top: 20px; }
+        .logout-link { display: block; text-align: center; color: #888; font-size: 12px; margin-top: 10px; text-decoration: underline; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -56,6 +57,7 @@
             <div class="card">
                 <h3>Người chơi (<span id="countReady">0</span>)</h3>
                 <div id="playerList"></div>
+                <div class="logout-link" onclick="logout()">Thoát khỏi phòng và đổi tên</div>
             </div>
 
             <div id="adminPanel" class="card admin-controls" style="display:none">
@@ -78,17 +80,21 @@
         const socket = io();
         let state = {};
 
-        // TỰ ĐỘNG ĐIỀN TÊN CŨ NẾU CÓ
+        // 1. TỰ ĐỘNG KẾT NỐI KHI LOAD TRANG
         window.onload = () => {
             const savedName = localStorage.getItem('ms_name');
-            if (savedName) document.getElementById('username').value = savedName;
+            const savedId = localStorage.getItem('ms_secret_id');
+            
+            if (savedName && savedId) {
+                // Nếu đã có thông tin, tự động gửi join luôn
+                socket.emit('join', { name: savedName, secretId: savedId });
+            }
         };
 
         function join() {
             const nameInput = document.getElementById('username').value.trim();
             if(!nameInput) return;
 
-            // Lấy hoặc Tạo mã định danh bí mật (Secret ID) cho trình duyệt này
             let secretId = localStorage.getItem('ms_secret_id');
             if (!secretId) {
                 secretId = 'uid_' + Math.random().toString(36).substr(2, 9);
@@ -96,39 +102,52 @@
             }
             
             localStorage.setItem('ms_name', nameInput);
-            
-            // Gửi cả TÊN và ID BÍ MẬT lên server
             socket.emit('join', { name: nameInput, secretId: secretId });
+        }
+
+        // 2. LOGOUT: CHỈ KHI BẤM THOÁT MỚI XÓA DỮ LIỆU
+        function logout() {
+            if(confirm("Bạn muốn thoát hẳn khỏi phòng này?")) {
+                localStorage.removeItem('ms_name');
+                localStorage.removeItem('ms_secret_id');
+                location.reload();
+            }
         }
 
         socket.on('errorMsg', (m) => alert(m));
 
         socket.on('youAreKicked', () => {
             alert("Bạn đã bị Quản trò mời ra khỏi phòng!");
-            localStorage.removeItem('ms_secret_id'); // Xóa ID để không tự vào lại được
+            localStorage.removeItem('ms_name');
+            localStorage.removeItem('ms_secret_id');
             location.reload(); 
         });
 
         socket.on('updateState', (s) => {
             state = s;
             const me = state.players.find(p => p.id === socket.id);
-            if (!me) return;
-
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('game').style.display = 'block';
-            document.getElementById('roleDisplay').innerText = me.role;
             
-            const btnStatus = document.getElementById('btnStatus');
-            if (me.isAdmin) {
-                btnStatus.style.display = 'none';
-                document.getElementById('adminPanel').style.display = 'block';
-                renderAdminSettings();
-            } else {
-                btnStatus.style.display = 'block';
-                btnStatus.innerText = me.isReady ? "THOÁT PHÒNG" : "VÀO PHÒNG";
-                btnStatus.className = me.isReady ? "btn-out" : "btn-ready";
+            if (me) {
+                document.getElementById('login').style.display = 'none';
+                document.getElementById('game').style.display = 'block';
+                document.getElementById('roleDisplay').innerText = me.role;
+                
+                const btnStatus = document.getElementById('btnStatus');
+                if (me.isAdmin) {
+                    btnStatus.style.display = 'none';
+                    document.getElementById('adminPanel').style.display = 'block';
+                    renderAdminSettings();
+                } else {
+                    btnStatus.style.display = 'block';
+                    btnStatus.innerText = me.isReady ? "THOÁT VÁN" : "VÀO VÁN";
+                    btnStatus.className = me.isReady ? "btn-out" : "btn-ready";
+                }
+                
+                renderPlayerList(me);
             }
+        });
 
+        function renderPlayerList(me) {
             const playerList = document.getElementById('playerList');
             playerList.innerHTML = '';
             let readyCount = 0;
@@ -156,7 +175,7 @@
                 playerList.appendChild(div);
             });
             document.getElementById('countReady').innerText = readyCount;
-        });
+        }
 
         function renderAdminSettings() {
             const container = document.getElementById('roleList');
@@ -206,7 +225,7 @@
         function toggleLife(id) { socket.emit('toggleLife', id); }
 
         function kick(id) {
-            if(confirm("Bạn có chắc chắn muốn đuổi người chơi này khỏi phòng?")) {
+            if(confirm("Đuổi người này khỏi phòng?")) {
                 socket.emit('kickPlayer', id);
             }
         }
