@@ -84,7 +84,13 @@ io.on('connection', (socket) => {
             io.emit('updateState', gameState);
         }
     });
-
+// 8. Người chơi chủ động thoát phòng hẳn
+    socket.on('leaveRoom', () => {
+        // Tìm và xóa người chơi dựa trên socket.id hiện tại
+        gameState.players = gameState.players.filter(p => p.id !== socket.id);
+        io.emit('updateState', gameState);
+        console.log('Một người chơi đã chủ động rời phòng vĩnh viễn.');
+    });
     // 5. Xào bài (Chỉ chia cho những người isReady)
     socket.on('shuffleCards', () => {
         const me = gameState.players.find(p => p.id === socket.id);

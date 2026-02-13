@@ -229,7 +229,21 @@
                 socket.emit('kickPlayer', id);
             }
         }
-
+function logout() {
+            if(confirm("Bạn muốn thoát hẳn khỏi phòng này?")) {
+                // Gửi lệnh lên server để xóa tên khỏi danh sách ngay lập tức
+                socket.emit('leaveRoom');
+                
+                // Sau đó mới xóa dữ liệu ở máy và load lại trang
+                localStorage.removeItem('ms_name');
+                localStorage.removeItem('ms_secret_id');
+                
+                // Đợi một chút xíu để lệnh gửi đi rồi mới reload
+                setTimeout(() => {
+                    location.reload();
+                }, 100);
+            }
+        }
         function shuffle() {
             if(confirm("Xác nhận xào bài ván mới và hồi sinh tất cả?")) {
                 socket.emit('shuffleCards');
