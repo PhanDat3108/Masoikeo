@@ -7,9 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         @font-face {
-    font-family: 'UTM Ong Do';
-    src: url('/fonts/00152-UTM-Ong-Do-Gia.ttf') format('truetype');
-}
+            font-family: 'UTM Ong Do';
+            src: url('/fonts/00152-UTM-Ong-Do-Gia.ttf') format('truetype');
+        }
         /* --- HỆ THỐNG MÀU SẮC TẾT CỔ TRUYỀN --- */
         :root {
             --crimson: #8e0000;
@@ -27,14 +27,14 @@
         body {
             font-family: 'Nunito', sans-serif;
             background-color: var(--midnight);
-            /* Họa tiết mây cổ truyền hoặc lưới ô vuông chìm */
             background-image: 
                 radial-gradient(circle at 50% 0%, #4a0000 0%, var(--midnight) 100%),
                 url("https://www.transparenttextures.com/patterns/oriental-tiles.png");
             color: var(--paper);
-            margin: 0; padding: 20px 15px;
+            margin: 0; padding: 20px 10px; /* Giảm padding ngang để tận dụng màn hình đt */
             min-height: 100vh;
             line-height: 1.6;
+            font-size: 18px; /* Tăng cỡ chữ gốc lên để mọi thứ to theo */
         }
 
         /* --- HIỆU ỨNG ĐÈN LỒNG --- */
@@ -47,7 +47,10 @@
         /* --- BỐ CỤC HÀNG DỌC --- */
         .main-layout {
             display: flex; flex-direction: column; gap: 25px;
-            max-width: 480px; margin: 0 auto; width: 100%;
+            /* MỞ RỘNG KHUNG CHO ĐIỆN THOẠI */
+            max-width: 600px; 
+            width: 98%; 
+            margin: 0 auto; 
             position: relative; z-index: 1;
         }
 
@@ -55,38 +58,44 @@
         .glass-card {
             background: var(--glass-bg);
             border: var(--border-gold);
-            border-radius: 12px; padding: 20px;
+            border-radius: 12px; padding: 25px; /* Tăng padding trong khung */
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
             backdrop-filter: blur(8px);
             position: relative;
             overflow: hidden;
         }
-        /* Hoa văn góc khung bài */
         .glass-card::before { content: '✤'; position: absolute; top: 5px; left: 8px; color: var(--gold); opacity: 0.4; font-size: 12px; }
         .glass-card::after { content: '✤'; position: absolute; bottom: 5px; right: 8px; color: var(--gold); opacity: 0.4; font-size: 12px; }
 
         h1, h2, h3 { font-family: 'Dancing Script', cursive; color: var(--gold); text-align: center; margin: 0 0 15px 0; }
-        h1 { font-size: 3.2em; text-shadow: 0 0 15px rgba(255, 215, 0, 0.4); margin-bottom: 5px; }
+        h1 { font-size: 4em; text-shadow: 0 0 15px rgba(255, 215, 0, 0.4); margin-bottom: 10px; } /* Tăng font tiêu đề */
 
         /* --- DANH SÁCH & XẾP HẠNG --- */
         .scroll-box {
-            max-height: 220px; overflow-y: auto; padding-right: 8px;
+            /* TĂNG CHIỀU CAO ĐỂ VUỐT THOẢI MÁI */
+            max-height: 50vh; 
+            min-height: 300px;
+            overflow-y: auto; padding-right: 8px;
         }
-        .scroll-box::-webkit-scrollbar { width: 4px; }
+        .scroll-box::-webkit-scrollbar { width: 6px; }
         .scroll-box::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
 
         .player-row, .rank-row { 
             display: flex; justify-content: space-between; align-items: center; 
-            padding: 12px 10px; border-bottom: 1px solid rgba(255,215,0,0.1); 
-            background: rgba(255,255,255,0.03); margin-bottom: 6px; border-radius: 6px;
+            padding: 16px 12px; /* Tăng độ dày dòng để dễ bấm */
+            border-bottom: 1px solid rgba(255,215,0,0.1); 
+            background: rgba(255,255,255,0.03); margin-bottom: 8px; border-radius: 8px;
+            font-size: 1.1em; /* Chữ trong danh sách to hơn */
         }
         .is-dead { opacity: 0.4; text-decoration: line-through; filter: grayscale(1); }
-        .role-tag { font-size: 0.7em; background: var(--gold); color: var(--crimson); padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-left: 8px; box-shadow: 0 0 8px var(--gold); }
+        .role-tag { font-size: 0.8em; background: var(--gold); color: var(--crimson); padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-left: 8px; box-shadow: 0 0 8px var(--gold); }
 
         /* --- KHU VỰC THẺ BÀI --- */
         .flip-card {
             background-color: transparent;
-            width: 250px; height: 380px; 
+            /* TĂNG KÍCH THƯỚC THẺ BÀI */
+            width: 300px; 
+            height: 450px; 
             perspective: 1000px; margin: 0 auto 20px auto; 
             cursor: pointer; display: none;
         }
@@ -98,46 +107,34 @@
             -webkit-backface-visibility: hidden; backface-visibility: hidden;
             border-radius: 15px; border: 3px solid var(--gold);
             box-shadow: 0 15px 40px rgba(0,0,0,0.8); overflow: hidden;
-            
         }
 
         .flip-card-front {
             background: var(--crimson) url('/picture/Gemini_Generated_Image_89i5p989i5p989i5.png') center/cover no-repeat;
             display: flex; align-items: flex-end; justify-content: center; padding-bottom: 30px;
         }
-        .flip-card-front h2 { font-size: 1.1em; color: var(--paper); opacity: 0.7; text-transform: uppercase; letter-spacing: 2px; }
+        .flip-card-front h2 { font-size: 1.3em; color: var(--paper); opacity: 0.7; text-transform: uppercase; letter-spacing: 2px; }
 
         .flip-card-back {
             background: var(--paper) url("https://www.transparenttextures.com/patterns/cream-paper.png");
             transform: rotateY(180deg);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 0; /* Đặt về 0 để ảnh tràn ra mép */
-    
-    overflow: hidden;
-    
+            padding: 0; 
+            overflow: hidden;
         }
         .role-img { 
-    width: 100%; 
-    height: 100%; 
-    /* CŨ: object-fit: contain; */
-    object-fit: cover; 
-    
-    /* 3. QUAN TRỌNG: Muốn to lên thì chỉnh số này */
-    /* 1.0 là vừa khít. 1.2 là to hơn 20%. 1.5 là to rưỡi. */
-    transform: scale(1.03); 
-    
-     /* MỚI: Ảnh sẽ phóng to lấp đầy khung, phần thừa tự ẩn */
-    /* CŨ: padding: 15px; */
-    padding: 0; /* MỚI: Bỏ hoàn toàn khoảng đệm */
-    
-    /* Thêm dòng này để ảnh cũng được bo tròn góc theo khung bài cho đẹp */
-    border-radius: 12px; 
-}
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            transform: scale(1.03); 
+            padding: 0; 
+            border-radius: 12px; 
+        }
 
         /* --- SỐ ĐẾM NGƯỢC --- */
         .countdown {
-            font-size: 7em; font-weight: bold; color: var(--gold); text-shadow: 0 0 20px #ff0000;
-            background: rgba(0,0,0,0.8); border-radius: 50%; width: 140px; height: 140px; line-height: 140px;
+            font-size: 8em; font-weight: bold; color: var(--gold); text-shadow: 0 0 20px #ff0000;
+            background: rgba(0,0,0,0.8); border-radius: 50%; width: 160px; height: 160px; line-height: 160px;
             display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10;
         }
 
@@ -145,50 +142,47 @@
         button { 
             border: none; border-radius: 8px; font-weight: 700; cursor: pointer; 
             text-transform: uppercase; width: 100%; transition: all 0.3s ease;
-            letter-spacing: 1px; font-size: 1em;
+            letter-spacing: 1px; font-size: 1.1em; /* Chữ nút to hơn */
         }
         
-        /* Nút Đỏ chính (mô phỏng lụa) */
         .btn-main { 
-            padding: 14px; 
+            padding: 16px; /* Nút dày hơn */
             background: linear-gradient(135deg, #b71c1c, #8e0000); 
             color: var(--gold); border: 1px solid var(--gold);
             box-shadow: 0 4px 15px rgba(183, 28, 28, 0.4);
         }
         .btn-main:active { transform: scale(0.96); }
 
-        /* Nút Sẵn sàng (Xanh ngọc bích) */
         .btn-ready { 
-            padding: 14px; 
+            padding: 16px; 
             background: linear-gradient(135deg, #004d40, #00695c); 
             color: #e0f2f1; border: 1px solid #4db6ac;
         }
 
-        /* Nút Chờ (Xám đen) */
-        .btn-wait { padding: 14px; background: #262626; color: #888; border: 1px solid #444; }
+        .btn-wait { padding: 16px; background: #262626; color: #888; border: 1px solid #444; }
 
         /* --- ADMIN CONTROLS --- */
         .admin-controls select { 
-            width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px;
-            background: rgba(0,0,0,0.5); border: 1px solid var(--gold); color: var(--paper); 
+            width: 100%; padding: 16px; margin-bottom: 12px; border-radius: 8px;
+            background: rgba(0,0,0,0.5); border: 1px solid var(--gold); color: var(--paper); font-size: 1.1em;
         }
         .role-config-item { 
             display: flex; justify-content: space-between; align-items: center; 
-            background: rgba(0,0,0,0.3); padding: 10px; margin-bottom: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.3); padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);
         }
-        .btn-mini { width: 32px; height: 32px; line-height: 30px; padding: 0; background: var(--paper); color: var(--midnight); }
-        .btn-win { padding: 12px; margin-top: 8px; color: white; border-radius: 6px; font-size: 0.9em; }
+        .btn-mini { width: 40px; height: 40px; line-height: 40px; padding: 0; background: var(--paper); color: var(--midnight); font-size: 1.2em; }
+        .btn-win { padding: 16px; margin-top: 10px; color: white; border-radius: 6px; font-size: 1em; }
         .win-villager { background: #1b5e20; } 
         .win-wolf { background: #b71c1c; } 
         .win-couple { background: #880e4f; }
-        .btn-couple { background: #ad1457; color: white; padding: 12px; margin-top: 10px; }
+        .btn-couple { background: #ad1457; color: white; padding: 16px; margin-top: 10px; }
 
         /* LOGIN */
-        #login { max-width: 380px; margin: 12vh auto; text-align: center; }
+        #login { max-width: 420px; margin: 10vh auto; text-align: center; }
         input[type="text"], input[type="number"] { 
-            width: 100%; padding: 14px; margin-bottom: 15px; 
+            width: 100%; padding: 16px; margin-bottom: 18px; 
             background: rgba(0,0,0,0.6); border: 1px solid var(--gold); 
-            color: var(--gold); border-radius: 8px; text-align: center; font-size: 1.1em;
+            color: var(--gold); border-radius: 8px; text-align: center; font-size: 1.2em;
             outline: none;
         }
         input::placeholder { color: rgba(255, 215, 0, 0.4); }
@@ -472,20 +466,14 @@
     function setCouple(){ const p1=document.getElementById('couple1').value; const p2=document.getElementById('couple2').value; if(p1&&p2&&p1!==p2) socket.emit('setCouple',[p1,p2]); else alert("Thỉnh chọn hai vị khác nhau!"); }
     function endGame(t){ if(confirm("Xác nhận phán quyết kết thúc ván?")) socket.emit('endGame', t); }
     function shuffle(){ if(confirm("Xác nhận xào bài khai cuộc?")) socket.emit('shuffleCards'); }
-function logout() { 
+    function logout() { 
         if(confirm("Cáo biệt bản thôn?")) { 
-            // 1. Gửi lệnh báo server xóa tên
             socket.emit('leaveRoom'); 
-            
-            // 2. Xóa dữ liệu trong máy
             localStorage.clear(); 
-            
-            // 3. QUAN TRỌNG: Chờ 100ms (0.1 giây) để tin nhắn kịp bay đến Server rồi mới F5
-            setTimeout(() => {
-                location.reload(); 
-            }, 500);
+            setTimeout(() => { location.reload(); }, 500);
         } 
-    }    socket.on('forceLogout', (m) => { alert(m); localStorage.clear(); location.reload(); });
+    }    
+    socket.on('forceLogout', (m) => { alert(m); localStorage.clear(); location.reload(); });
     socket.on('updateLeaderboard', (lb) => {
         const div = document.getElementById('leaderboard');
         div.innerHTML = '';
