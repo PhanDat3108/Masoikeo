@@ -10,130 +10,191 @@ app.use(express.static('public'));
 
 let gameState = {
     players: [], 
+    couple: [],
     rolesConfig: [
-        { name: 'Dân làng', count: 4 },
+        { name: 'Dân Ngu', count: 4 },
         { name: 'Sói', count: 2 },
-        { name: 'Tiên tri', count: 1 }
+        { name: 'Tiên tri', count: 1 },
+        { name: 'Bảo vệ', count: 1 },
+        { name: 'Thợ săn', count: 1 },
+        { name: 'Phù Thuỷ', count: 1 },
+        { name: 'Kẻ Bị Nguyền', count: 1 },
+        { name: 'Sida', count: 1 }
     ]
 };
 
+let matchData = {
+    count: 0,
+    lastDate: new Date().toDateString(),
+    leaderboard: {}
+};
+
+function checkAdmin(socket) {
+    const p = gameState.players.find(p => p.id === socket.id);
+    return p && p.isAdmin;
+}
+
 io.on('connection', (socket) => {
-    // 1. Tham gia phòng & Nhận diện người cũ
+    socket.emit('updateRolesConfig', gameState.rolesConfig);
+    socket.emit('updateMatchCount', matchData.count);
+    socket.emit('updateLeaderboard', matchData.leaderboard);
+
     socket.on('join', (data) => {
         const { name, secretId } = data;
         if (!name || !secretId) return;
 
         let isAdmin = name.toLowerCase() === 'admin';
-        
-        // Kiểm tra xem mã bí mật này đã có trong danh sách chưa
-        let existingPlayer = gameState.players.find(p => p.secretId === secretId);
+        // Chuẩn hóa tên
+        let finalName = isAdmin ? "QUẢN TRÒ" : name.toUpperCase().trim();
 
-        if (existingPlayer) {
-            // Cập nhật socket ID mới để Server biết gửi dữ liệu về đâu
-            existingPlayer.id = socket.id;
-            // Cho phép đổi tên nếu muốn, nhưng giữ nguyên role và trạng thái
-            existingPlayer.name = isAdmin ? "QUẢN TRÒ" : name.toUpperCase();
-        } else {
-            // Nếu là người mới hoàn toàn
-            const hasAdmin = gameState.players.some(p => p.isAdmin);
-            if (isAdmin && hasAdmin) {
-                socket.emit('errorMsg', 'Đã có Quản trò trong phòng!');
-                return;
+        // 1. KIỂM TRA RECONNECT (Trùng mã bí mật)
+        let playerBySecret = gameState.players.find(p => p.secretId === secretId);
+        if (playerBySecret) {
+            playerBySecret.id = socket.id;
+            playerBySecret.name = finalName;
+            io.emit('updateState', gameState);
+            return; 
+        }
+
+        // 2. KIỂM TRA TRÙNG TÊN -> ĐÁ NGƯỜI CŨ
+        let duplicateIndex = gameState.players.findIndex(p => p.name === finalName);
+
+        if (duplicateIndex !== -1) {
+            const oldPlayer = gameState.players[duplicateIndex];
+            
+            // A. Gửi thông báo
+            io.to(oldPlayer.id).emit('forceLogout', 'Tài khoản đã đăng nhập ở nơi khác!');
+            
+            // B. [ĐOẠN MỚI THÊM VÀO ĐÂY] NGẮT KẾT NỐI MÁY CŨ NGAY LẬP TỨC
+            const oldSocket = io.sockets.sockets.get(oldPlayer.id);
+            if (oldSocket) {
+                oldSocket.disconnect(true); // Cắt đứt kết nối mạng của người cũ
             }
-
-            gameState.players.push({ 
-                id: socket.id, 
-                secretId: secretId, 
-                name: isAdmin ? "QUẢN TRÒ" : name.toUpperCase(), 
-                role: isAdmin ? "Quản trò" : "...", 
-                isAlive: true, 
-                isAdmin, 
-                isReady: isAdmin 
-            });
+            
+            // C. Xóa khỏi danh sách
+            gameState.players.splice(duplicateIndex, 1);
         }
-        io.emit('updateState', gameState);
-    });
 
-    // 2. Vào ván / Thoát ván
-    socket.on('setStatus', (status) => {
-        const player = gameState.players.find(p => p.id === socket.id);
-        if (player && !player.isAdmin) {
-            player.isReady = status;
-            // Nếu thoát ván chơi thì reset role về mặc định
-            if (!status) player.role = "..."; 
-            io.emit('updateState', gameState);
-        }
-    });
-
-    // 3. Cập nhật cấu hình bộ bài
-    socket.on('updateConfig', (newConfig) => {
-        const me = gameState.players.find(p => p.id === socket.id);
-        if (me && me.isAdmin) {
-            gameState.rolesConfig = newConfig;
-            io.emit('updateState', gameState);
-        }
-    });
-
-    // 4. Đuổi người chơi (Xóa vĩnh viễn khỏi danh sách)
-    socket.on('kickPlayer', (targetId) => {
-        const me = gameState.players.find(p => p.id === socket.id);
-        if (me && me.isAdmin) {
-            // Gửi lệnh ép trình duyệt đối phương xóa localStorage
-            io.to(targetId).emit('youAreKicked');
-            gameState.players = gameState.players.filter(p => p.id !== targetId);
-            io.emit('updateState', gameState);
-        }
-    });
-// 8. Người chơi chủ động thoát phòng hẳn
-    socket.on('leaveRoom', () => {
-        // Tìm và xóa người chơi dựa trên socket.id hiện tại
-        gameState.players = gameState.players.filter(p => p.id !== socket.id);
-        io.emit('updateState', gameState);
-        console.log('Một người chơi đã chủ động rời phòng vĩnh viễn.');
-    });
-    // 5. Xào bài (Chỉ chia cho những người isReady)
-    socket.on('shuffleCards', () => {
-        const me = gameState.players.find(p => p.id === socket.id);
-        if (!me || !me.isAdmin) return;
-
-        let deck = [];
-        gameState.rolesConfig.forEach(r => {
-            for(let i=0; i < r.count; i++) deck.push(r.name);
+        // 3. THÊM NGƯỜI MỚI
+        gameState.players.push({ 
+            id: socket.id, 
+            secretId: secretId, 
+            name: finalName, 
+            role: isAdmin ? "Quản trò" : "...", 
+            isAlive: true, 
+            isAdmin, 
+            isReady: isAdmin 
         });
-        
-        // Xào bài ngẫu nhiên
-        for (let i = deck.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [deck[i], deck[j]] = [deck[j], deck[i]];
+
+        if (!isAdmin && !matchData.leaderboard[finalName]) {
+            matchData.leaderboard[finalName] = 0;
         }
         
-        let readyPlayers = gameState.players.filter(p => p.isReady && !p.isAdmin);
-        readyPlayers.forEach((p, index) => {
-            p.role = deck[index] || 'Dân thường (Thừa)';
-            p.isAlive = true; // Reset sống khi xào ván mới
-        });
         io.emit('updateState', gameState);
+        io.emit('updateRolesConfig', gameState.rolesConfig);
     });
 
-    // 6. Quản lý Sống/Chết
-    socket.on('toggleLife', (targetId) => {
-        const me = gameState.players.find(p => p.id === socket.id);
-        if (me && me.isAdmin) {
-            const target = gameState.players.find(p => p.id === targetId);
-            if (target && !target.isAdmin) {
-                target.isAlive = !target.isAlive;
+    // --- CÁC LOGIC KHÁC GIỮ NGUYÊN ---
+    socket.on('transformToWolf', (id) => {
+        if (checkAdmin(socket)) {
+            const p = gameState.players.find(player => player.id === id);
+            if (p && p.role === 'Kẻ Bị Nguyền') {
+                p.role = 'Sói'; 
                 io.emit('updateState', gameState);
             }
         }
     });
 
-    // 7. Ngắt kết nối tạm thời
-    socket.on('disconnect', () => {
-        // KHÔNG xóa người chơi ở đây để tránh việc reload trang bị mất vai.
-        // Người chơi chỉ bị xóa khi Admin dùng nút Kick.
-        console.log('Một thiết bị vừa tạm ngắt kết nối (reload/đóng tab).');
+    socket.on('updateConfig', (newConfig) => {
+        if (checkAdmin(socket)) {
+            gameState.rolesConfig = newConfig;
+            io.emit('updateState', gameState); 
+            io.emit('updateRolesConfig', gameState.rolesConfig);
+        }
+    });
+
+    socket.on('setStatus', (status) => {
+        const p = gameState.players.find(p => p.id === socket.id);
+        if (p && !p.isAdmin) {
+            p.isReady = status;
+            if (!status) p.role = "..."; 
+            io.emit('updateState', gameState);
+        }
+    });
+
+    socket.on('shuffleCards', () => {
+        if (!checkAdmin(socket)) return;
+        matchData.count++;
+        gameState.couple = [];
+        let deck = [];
+        gameState.rolesConfig.forEach(r => { for(let i=0; i < r.count; i++) deck.push(r.name); });
+        for (let i = deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+        let readyPlayers = gameState.players.filter(p => p.isReady && !p.isAdmin);
+        readyPlayers.forEach((p, index) => {
+            p.role = deck[index] || 'Dân Ngu';
+            p.isAlive = true; 
+        });
+        io.emit('updateState', gameState);
+        io.emit('updateMatchCount', matchData.count);
+        io.emit('startCountdown');
+    });
+
+    socket.on('endGame', (team) => {
+        if (!checkAdmin(socket)) return;
+
+        gameState.players.forEach(p => {
+            if (p.isAdmin) return;
+            let isWinner = false;
+
+            if (team === 'VILLAGER') {
+                // Dân thắng: Không phải Sói và Không phải Sida
+                if (p.role !== 'Sói' && p.role !== 'Sida') isWinner = true;
+            } 
+            else if (team === 'WEREWOLF') {
+                if (p.role === 'Sói') isWinner = true;
+            } 
+            else if (team === 'COUPLE') {
+                if (gameState.couple.includes(p.id)) isWinner = true;
+            } 
+            else if (team === 'SIDA_SOLO') {
+                if (p.role === 'Sida') isWinner = true;
+            }
+
+            if (isWinner) {
+                matchData.leaderboard[p.name] = (matchData.leaderboard[p.name] || 0) + 1;
+            }
+        });
+
+        io.emit('updateLeaderboard', matchData.leaderboard);
+        io.emit('gameEnded', team);
+    });
+
+    socket.on('toggleLife', (id) => {
+        if (checkAdmin(socket)) {
+            const p = gameState.players.find(p => p.id === id);
+            if (p) { p.isAlive = !p.isAlive; io.emit('updateState', gameState); }
+        }
+    });
+socket.on('leaveRoom', () => {
+        gameState.players = gameState.players.filter(p => p.id !== socket.id);
+        io.emit('updateState', gameState);
+    });
+    socket.on('kickPlayer', (id) => {
+        if (checkAdmin(socket)) {
+            io.to(id).emit('youAreKicked');
+            
+            // ĐÁ NGƯỜI BỊ KICK LUÔN
+            const socketToKick = io.sockets.sockets.get(id);
+            if (socketToKick) socketToKick.disconnect(true);
+
+            gameState.players = gameState.players.filter(p => p.id !== id);
+            io.emit('updateState', gameState);
+        }
     });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Ma Soi Server is running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
