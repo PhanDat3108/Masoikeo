@@ -31,10 +31,10 @@
                 radial-gradient(circle at 50% 0%, #4a0000 0%, var(--midnight) 100%),
                 url("https://www.transparenttextures.com/patterns/oriental-tiles.png");
             color: var(--paper);
-            margin: 0; padding: 20px 10px; /* Giảm padding ngang để tận dụng màn hình đt */
+            margin: 0; padding: 20px 10px;
             min-height: 100vh;
             line-height: 1.6;
-            font-size: 18px; /* Tăng cỡ chữ gốc lên để mọi thứ to theo */
+            font-size: 18px;
         }
 
         /* --- HIỆU ỨNG ĐÈN LỒNG --- */
@@ -47,7 +47,6 @@
         /* --- BỐ CỤC HÀNG DỌC --- */
         .main-layout {
             display: flex; flex-direction: column; gap: 25px;
-            /* MỞ RỘNG KHUNG CHO ĐIỆN THOẠI */
             max-width: 600px; 
             width: 98%; 
             margin: 0 auto; 
@@ -58,7 +57,7 @@
         .glass-card {
             background: var(--glass-bg);
             border: var(--border-gold);
-            border-radius: 12px; padding: 25px; /* Tăng padding trong khung */
+            border-radius: 12px; padding: 25px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
             backdrop-filter: blur(8px);
             position: relative;
@@ -68,11 +67,10 @@
         .glass-card::after { content: '✤'; position: absolute; bottom: 5px; right: 8px; color: var(--gold); opacity: 0.4; font-size: 12px; }
 
         h1, h2, h3 { font-family: 'Dancing Script', cursive; color: var(--gold); text-align: center; margin: 0 0 15px 0; }
-        h1 { font-size: 4em; text-shadow: 0 0 15px rgba(255, 215, 0, 0.4); margin-bottom: 10px; } /* Tăng font tiêu đề */
+        h1 { font-size: 4em; text-shadow: 0 0 15px rgba(255, 215, 0, 0.4); margin-bottom: 10px; }
 
         /* --- DANH SÁCH & XẾP HẠNG --- */
         .scroll-box {
-            /* TĂNG CHIỀU CAO ĐỂ VUỐT THOẢI MÁI */
             max-height: 50vh; 
             min-height: 300px;
             overflow-y: auto; padding-right: 8px;
@@ -82,10 +80,10 @@
 
         .player-row, .rank-row { 
             display: flex; justify-content: space-between; align-items: center; 
-            padding: 16px 12px; /* Tăng độ dày dòng để dễ bấm */
+            padding: 16px 12px;
             border-bottom: 1px solid rgba(255,215,0,0.1); 
             background: rgba(255,255,255,0.03); margin-bottom: 8px; border-radius: 8px;
-            font-size: 1.1em; /* Chữ trong danh sách to hơn */
+            font-size: 1.1em;
         }
         .is-dead { opacity: 0.4; text-decoration: line-through; filter: grayscale(1); }
         .role-tag { font-size: 0.8em; background: var(--gold); color: var(--crimson); padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-left: 8px; box-shadow: 0 0 8px var(--gold); }
@@ -93,7 +91,6 @@
         /* --- KHU VỰC THẺ BÀI --- */
         .flip-card {
             background-color: transparent;
-            /* TĂNG KÍCH THƯỚC THẺ BÀI */
             width: 300px; 
             height: 450px; 
             perspective: 1000px; margin: 0 auto 20px auto; 
@@ -142,11 +139,11 @@
         button { 
             border: none; border-radius: 8px; font-weight: 700; cursor: pointer; 
             text-transform: uppercase; width: 100%; transition: all 0.3s ease;
-            letter-spacing: 1px; font-size: 1.1em; /* Chữ nút to hơn */
+            letter-spacing: 1px; font-size: 1.1em;
         }
         
         .btn-main { 
-            padding: 16px; /* Nút dày hơn */
+            padding: 16px;
             background: linear-gradient(135deg, #b71c1c, #8e0000); 
             color: var(--gold); border: 1px solid var(--gold);
             box-shadow: 0 4px 15px rgba(183, 28, 28, 0.4);
@@ -324,7 +321,6 @@
                 document.getElementById('myCardArea').style.display = 'block';
                 document.getElementById('actionButtons').style.display = 'block';
                 document.getElementById('adminPanel').style.display = 'none';
-                document.getElementById('roleImage').src = roleImages[me.role] || roleImages['default'];
                 
                 if(!canFlip) {
                     const btn = document.getElementById('btnStatus');
@@ -379,13 +375,25 @@
         }
     }
 
+    // TÍNH NĂNG MỚI: DỌN DẸP BÀI VÀ THÔNG BÁO VÁN MỚI
     socket.on('startCountdown', () => {
         const inner = document.getElementById('cardInner');
         const countDiv = document.getElementById('countdownNum');
         const btn = document.getElementById('btnStatus');
-        inner.classList.remove('flipped'); canFlip = false;
+        
+        // 1. Úp bài xuống ngay lập tức
+        inner.classList.remove('flipped'); 
+        canFlip = false;
+        
+        // 2. Chèn ảnh vai trò mới vào (đảm bảo không kẹt ảnh cũ)
+        document.getElementById('roleImage').src = roleImages[myRole] || roleImages['default'];
+
         countDiv.style.display = 'block';
         let c = 5; countDiv.innerText = c;
+        
+        btn.innerText = "ĐANG CHIA BÀI...";
+        btn.className = "btn-wait";
+
         const t = setInterval(() => {
             c--; countDiv.innerText = c;
             if(c <= 0) {
@@ -397,6 +405,30 @@
                 btn.onclick = flipCard;
             }
         }, 1000);
+    });
+
+    // TÍNH NĂNG MỚI: THÔNG BÁO HẾT VÁN
+    socket.on('gameEnded', (team) => {
+        let teamName = "HÒA";
+        if(team === 'VILLAGER') teamName = "BẢN THÔN";
+        else if(team === 'WEREWOLF') teamName = "MA SÓI";
+        else if(team === 'COUPLE') teamName = "UYÊN ƯƠNG";
+        else if(team === 'SIDA_SOLO') teamName = "KẺ BỊ NGUYỀN (TREO CỔ SIDA)";
+
+        // Hiện thông báo popup
+        alert(`🎉 VÁN ĐẤU ĐÃ KẾT THÚC!\n🏆 Phe chiến thắng: ${teamName}\n\nChờ Quản trò chia bài ván tiếp theo nhé!`);
+
+        // Dọn dẹp bài: Úp bài xuống và chờ
+        const inner = document.getElementById('cardInner');
+        inner.classList.remove('flipped');
+        canFlip = false;
+
+        const btn = document.getElementById('btnStatus');
+        const me = state.players.find(p => p.id === socket.id);
+        if (me && !me.isAdmin) {
+            btn.innerText = me.isReady ? "ĐANG ĐỢI KHAI CUỘC..." : "SẴN SÀNG NHẬN LỘC";
+            btn.className = me.isReady ? "btn-wait" : "btn-ready";
+        }
     });
 
     function flipCard() {
