@@ -394,16 +394,29 @@ body::after {
    WOLF LOADING SPRITE
    ================================================ */
 @keyframes run-wolf {
-  from { background-position: 0px 0px; }
-  to { background-position: -2100px 0px; }
+  0% { background-position: 0% 0%; }
+  7.14% { background-position: 25% 0%; }
+  14.28% { background-position: 50% 0%; }
+  21.42% { background-position: 75% 0%; }
+  28.57% { background-position: 100% 0%; }
+  35.71% { background-position: 0% 50%; }
+  42.85% { background-position: 25% 50%; }
+  50.00% { background-position: 50% 50%; }
+  57.14% { background-position: 75% 50%; }
+  64.28% { background-position: 100% 50%; }
+  71.42% { background-position: 0% 100%; }
+  78.57% { background-position: 25% 100%; }
+  85.71% { background-position: 50% 100%; }
+  92.85% { background-position: 75% 100%; }
+  100% { background-position: 0% 0%; }
 }
 
 .wolf-loading {
-  width: 150px;
-  height: 106px;
-  background-image: url('/wolf-strip.png');
-  background-size: 2100px 106px;
+  width: 160px;
+  height: 120px;
+  background-image: url('/wolf-running.png');
+  background-size: 500% 300%;
   background-repeat: no-repeat;
-  animation: run-wolf 0.7s steps(14) infinite;
+  animation: run-wolf 0.7s step-end infinite;
   filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
 }
