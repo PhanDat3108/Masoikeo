@@ -1,0 +1,391 @@
+@import "tailwindcss";
+
+/* ================================================
+   DARK FANTASY MONOCHROME — Design System
+   Colors: #0A0A0A (black), #FFFFFF (white), deep grays
+   Inspired by: Tarot, Gothic, Dark Fantasy, Tribal
+   ================================================ */
+
+@theme {
+  /* Animations */
+  --animate-mysticPulse: mysticPulse 4s ease-in-out infinite;
+  --animate-fadeIn: fadeIn 0.8s ease-out forwards;
+  --animate-slowGlow: slowGlow 3s ease-in-out infinite alternate;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-runeRotate: runeRotate 30s linear infinite;
+
+  @keyframes mysticPulse {
+
+    0%,
+    100% {
+      opacity: 0.4;
+    }
+
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slowGlow {
+    0% {
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.08), 0 0 20px rgba(255, 255, 255, 0.04);
+    }
+
+    100% {
+      box-shadow: 0 0 18px rgba(255, 255, 255, 0.22), 0 0 40px rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  @keyframes float {
+
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+
+  @keyframes runeRotate {
+    from {
+      transform: rotate(0deg);
+    }
+
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  --font-heading: 'Cinzel',
+  'Times New Roman',
+  serif;
+  --font-display: 'Cinzel Decorative',
+  'Cinzel',
+  serif;
+  --font-body: 'Inter',
+  system-ui,
+  sans-serif;
+}
+
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+}
+
+/* ================================================
+   BASE STYLES
+   ================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #0F0F0F;
+  color: #D8D8D8;
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle star-field background via radial dots */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, rgba(255, 255, 255, 0.45) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 40%, rgba(255, 255, 255, 0.25) 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 10%, rgba(255, 255, 255, 0.35) 0%, transparent 100%),
+    radial-gradient(1px 1px at 65% 55%, rgba(255, 255, 255, 0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 25%, rgba(255, 255, 255, 0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 70%, rgba(255, 255, 255, 0.35) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 80%, rgba(255, 255, 255, 0.25) 0%, transparent 100%),
+    radial-gradient(1px 1px at 35% 65%, rgba(255, 255, 255, 0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 85%, rgba(255, 255, 255, 0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 45%, rgba(255, 255, 255, 0.22) 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 90%, rgba(255, 255, 255, 0.28) 0%, transparent 100%),
+    radial-gradient(1px 1px at 5% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 100%),
+    radial-gradient(1px 1px at 95% 5%, rgba(255, 255, 255, 0.35) 0%, transparent 100%);
+}
+
+/* Subtle parchment noise overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+
+/* ================================================
+   TYPOGRAPHY
+   ================================================ */
+.font-heading {
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.font-gothic {
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+/* ================================================
+   GOTHIC CARD — Tarot-style panel with corner ornaments
+   ================================================ */
+.gothic-card {
+  position: relative;
+  background: #141414;
+  border: 1px solid #3D3D3D;
+  border-radius: 4px;
+  padding: 1.5rem;
+  box-shadow: 0 0 0 1px #222, 0 0 20px rgba(0, 0, 0, 0.5);
+  overflow: visible;
+}
+
+/* Double border illusion */
+.gothic-card::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid #333;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* Corner decorations */
+.gothic-card::after {
+  content: '✦';
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-size: 8px;
+  color: #555;
+  text-shadow:
+
+    calc(100cqw - 20px) 0 0 #444;
+  pointer-events: none;
+}
+
+/* ================================================
+   GOTHIC BUTTON — Badge/medallion style
+   ================================================ */
+.gothic-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.5rem;
+  background: #111;
+  color: #DDD;
+  border: 1px solid #505050;
+  border-radius: 2px;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  box-shadow: 0 0 0 transparent;
+}
+
+.gothic-btn:hover {
+  color: #FFF;
+  border-color: #888;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.08), 0 0 30px rgba(255, 255, 255, 0.03);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+.gothic-btn:active {
+  transform: scale(0.98);
+}
+
+.gothic-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  border-color: #2A2A2A;
+}
+
+.gothic-btn:disabled:hover {
+  color: #CCCCCC;
+  border-color: #222;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+/* Primary variant */
+.gothic-btn-primary {
+  border-color: #777;
+  color: #FFF;
+}
+
+.gothic-btn-primary:hover {
+  border-color: #FFF;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.12);
+}
+
+/* Danger variant */
+.gothic-btn-danger {
+  border-color: #555;
+  color: #AAA;
+}
+
+.gothic-btn-danger:hover {
+  border-color: #999;
+  color: #FFF;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+/* ================================================
+   GOTHIC INPUT
+   ================================================ */
+.gothic-input {
+  background: #111;
+  border: 1px solid #444;
+  border-radius: 2px;
+  padding: 0.7rem 1rem;
+  color: #EEE;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+  outline: none;
+}
+
+.gothic-input::placeholder {
+  color: #666;
+  font-style: italic;
+}
+
+.gothic-input:focus {
+  border-color: #999;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+/* ================================================
+   DECORATIVE ORNAMENTS
+   ================================================ */
+
+/* Horizontal divider with center ornament */
+.gothic-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0;
+  color: #444;
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+}
+
+.gothic-divider::before,
+.gothic-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #444, transparent);
+}
+
+/* Magic circle background decoration */
+.magic-circle {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: runeRotate 30s linear infinite;
+}
+
+.magic-circle::before {
+  content: '';
+  position: absolute;
+  inset: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+  border-radius: 50%;
+}
+
+.magic-circle::after {
+  content: '';
+  position: absolute;
+  inset: 45px;
+  border: 1px dashed rgba(255, 255, 255, 0.02);
+  border-radius: 50%;
+}
+
+/* ================================================
+   SCROLLBAR
+   ================================================ */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0F0F0F;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* ================================================
+   SELECTION
+   ================================================ */
+::selection {
+  background: rgba(255, 255, 255, 0.15);
+  color: #FFF;
+}

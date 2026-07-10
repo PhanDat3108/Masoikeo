@@ -2,16 +2,14 @@
   "name": "masoi",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "dev": "concurrently \"npm start --prefix server\" \"npm run dev --prefix client\"",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "express": "^5.2.1",
-    "socket.io": "^4.8.3"
+  "devDependencies": {
+    "concurrently": "^10.0.3"
   }
 }
