@@ -1,0 +1,19 @@
+services:
+  # 1. Backend (Web Service)
+  - type: web
+    name: masoi-backend
+    env: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+
+  # 2. Frontend (Static Site)
+  - type: static
+    name: masoi-frontend
+    rootDir: client
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_SOCKET_URL
+        sync: false # Render sẽ yêu cầu bạn nhập giá trị này trên Dashboard
