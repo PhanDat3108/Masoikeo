@@ -28,6 +28,7 @@ function App() {
     const allImages = [
         GAME_ASSETS.cardBackUrl,
         GAME_ASSETS.backgroundUrl,
+        "https://i.ibb.co/gkGF615/Chat-GPT-Image-13-46-01-10-thg-7-2026.png",
         ...ROLES_CONFIG.map(r => r.imageUrl)
     ];
     const imagesLoaded = usePreloadImages(allImages);

@@ -23,12 +23,12 @@ export const usePreloadImages = (imageUrls) => {
         let cancelled = false;
         const total = validUrls.length;
 
-        // Timeout: nếu sau 5 giây ảnh chưa load xong, bỏ qua để không kẹt loading
+        // Timeout: nếu sau 30 giây ảnh chưa load xong, bỏ qua để không kẹt loading
         const timeout = setTimeout(() => {
             if (!cancelled) {
                 setImagesLoaded(true);
             }
-        }, 5000);
+        }, 30000);
 
         validUrls.forEach((url) => {
             const img = new Image();
