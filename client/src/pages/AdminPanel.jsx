@@ -230,8 +230,8 @@ export const AdminPanel = () => {
                         </div>
                     )}
 
-                    {/* Player Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 overflow-y-auto flex-1 pr-1">
+                    {/* Player List */}
+                    <div className="space-y-1.5 overflow-y-auto flex-1 pr-1">
                         {players.map(p => {
                             const isInCouple = couple.includes(p.id);
                             const isSelectedForCouple = coupleSelection.includes(p.id);
@@ -246,47 +246,47 @@ export const AdminPanel = () => {
                             return (
                                 <div key={p.id}
                                     onClick={coupleMode ? () => toggleCoupleSelect(p.id) : undefined}
-                                    className={`p-3 flex flex-col gap-2 transition-all duration-300 ${coupleMode ? 'cursor-pointer' : ''} ${!p.isAlive ? 'opacity-40' : ''}`}
-                                    style={{ background: bgColor, border: `1px solid ${borderColor}`, borderRadius: '3px' }}>
+                                    className={`p-2 px-3 flex items-center justify-between transition-all duration-300 ${coupleMode ? 'cursor-pointer' : ''} ${!p.isAlive ? 'opacity-40' : ''}`}
+                                    style={{ background: bgColor, border: `1px solid ${borderColor}`, borderRadius: '2px' }}>
                                     
-                                    <div className="flex justify-between items-start">
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className={`font-heading text-xs tracking-wider truncate ${p.isAlive ? 'text-white/70' : 'text-white/30 line-through'}`}>
-                                                    {p.name}
-                                                </span>
-                                                {isInCouple && <span className="text-white/30 text-[10px]" title="Cặp đôi">✧✧</span>}
-                                            </div>
-                                            <div className="text-[10px] text-white/25 flex items-center gap-1.5 mt-0.5" style={{ fontFamily: 'var(--font-body)' }}>
-                                                <span className={`w-1 h-1 rounded-full inline-block ${p.isReady ? 'bg-white/50' : 'bg-white/10'}`}></span>
-                                                {p.isReady ? "Sẵn sàng" : "Đang chờ"}
-                                            </div>
+                                    {/* Info Left */}
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <div className="flex items-center gap-1 w-24 shrink-0">
+                                            <span className={`font-heading text-xs tracking-wider truncate ${p.isAlive ? 'text-white/70' : 'text-white/30 line-through'}`}>
+                                                {p.name}
+                                            </span>
+                                            {isInCouple && <span className="text-white/30 text-[10px]" title="Cặp đôi">✧✧</span>}
                                         </div>
+                                        
+                                        <div className="text-[10px] text-white/25 flex items-center gap-1.5 w-20 shrink-0" style={{ fontFamily: 'var(--font-body)' }}>
+                                            <span className={`w-1 h-1 rounded-full inline-block ${p.isReady ? 'bg-white/50' : 'bg-white/10'}`}></span>
+                                            {p.isReady ? "Sẵn sàng" : "Đang chờ"}
+                                        </div>
+
+                                        <div className="font-heading text-[10px] text-white/40 tracking-wider truncate flex-1">
+                                            {p.role}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Actions Right */}
+                                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                                        {!coupleMode && p.role === 'Kẻ Bị Nguyền' && p.isAlive && (
+                                            <button onClick={(e) => { e.stopPropagation(); handleTransformToWolf(p.id); }}
+                                                className="text-white/20 hover:text-white/60 p-1 transition-colors" title="Biến thành Sói"
+                                                style={{ fontSize: '12px' }}>𖤐</button>
+                                        )}
+                                        {!coupleMode && (
+                                            <button onClick={(e) => { e.stopPropagation(); handleToggleLife(p.id); }}
+                                                className="text-white/20 hover:text-white/60 p-1 transition-colors"
+                                                title={p.isAlive ? "Giết" : "Hồi sinh"}>
+                                                {p.isAlive ? <Skull size={14} /> : <Heart size={14} />}
+                                            </button>
+                                        )}
                                         {!coupleMode && (
                                             <button onClick={(e) => { e.stopPropagation(); handleKick(p.id); }}
                                                 className="text-white/10 hover:text-white/50 p-1 transition-colors" title="Kick">
                                                 <UserMinus size={14} />
                                             </button>
-                                        )}
-                                    </div>
-                                    
-                                    <div className="flex justify-between items-center pt-2" style={{ borderTop: '1px solid #1A1A1A' }}>
-                                        <div className="font-heading text-sm text-white/50 tracking-wider">
-                                            {p.role}
-                                        </div>
-                                        {!coupleMode && (
-                                            <div className="flex items-center gap-1">
-                                                {p.role === 'Kẻ Bị Nguyền' && p.isAlive && (
-                                                    <button onClick={(e) => { e.stopPropagation(); handleTransformToWolf(p.id); }}
-                                                        className="text-white/20 hover:text-white/60 p-1 transition-colors" title="Biến thành Sói"
-                                                        style={{ fontSize: '12px' }}>𖤐</button>
-                                                )}
-                                                <button onClick={(e) => { e.stopPropagation(); handleToggleLife(p.id); }}
-                                                    className="text-white/20 hover:text-white/60 p-1 transition-colors"
-                                                    title={p.isAlive ? "Giết" : "Hồi sinh"}>
-                                                    {p.isAlive ? <Skull size={14} /> : <Heart size={14} />}
-                                                </button>
-                                            </div>
                                         )}
                                     </div>
                                 </div>
