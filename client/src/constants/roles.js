@@ -3,7 +3,7 @@ export const ROLES_CONFIG = [
     id: "dan_ngu",
     name: "Dân Ngu",
     // TODO: Nhập link ảnh Dân Làng vào đây để tôi dễ dàng tìm và điền vào sau
-    imageUrl: "https://i.ibb.co/xwCF3wP/Chat-GPT-Image-12-45-05-10-thg-7-2026.png",
+    imageUrl: "https://i.ibb.co/fzDMqKZ6/Chat-GPT-Image-12-45-05-10-thg-7-2026.png",
   },
   {
     id: "soi",
@@ -33,7 +33,7 @@ export const ROLES_CONFIG = [
     id: "phu_thuy",
     name: "Phù Thuỷ",
     // TODO: Nhập link ảnh Phù Thuỷ vào đây
-    imageUrl: "https://i.ibb.co/RTnb7zJT/Chat-GPT-Image-12-49-34-10-thg-7-2026.png",
+    imageUrl: "https://i.ibb.co/0Rvq04Z1/Chat-GPT-Image-14-50-28-11-thg-7-2026.png",
   },
   {
     id: "ke_bi_nguyen",
@@ -46,6 +46,13 @@ export const ROLES_CONFIG = [
     name: "Sida",
     // TODO: Nhập link ảnh Sida vào đây
     imageUrl: "https://i.ibb.co/whc6fM2S/Chat-GPT-Image-13-03-42-10-thg-7-2026.png",
+  },
+  ,
+  {
+    id: "cupid",
+    name: "Cupod",
+    // TODO: Nhập link ảnh Sida vào đây
+    imageUrl: "https://i.ibb.co/LdzZVK3p/Chat-GPT-Image-15-01-27-11-thg-7-2026.png",
   }
 ];
 
