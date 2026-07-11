@@ -99,8 +99,10 @@ export const PlayerView = () => {
                             onClick={() => {
                                 setIsFlipped(!isFlipped);
                                 if (!isFlipped) {
-                                    const audio = new Audio('/card-flip.mp3');
-                                    audio.play().catch(e => console.log('Audio error:', e));
+                                    import('../App.jsx').then(({ audioRefs }) => {
+                                        audioRefs.flip.volume = 1;
+                                        audioRefs.flip.play().catch(e => console.log('Audio error:', e));
+                                    });
                                 }
                             }}
                             countdown={countdown}

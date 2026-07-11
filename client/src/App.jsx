@@ -7,6 +7,28 @@ import { ROLES_CONFIG, GAME_ASSETS } from './constants/roles.js';
 import { usePreloadImages } from './hooks/usePreloadImages.js';
 import { v4 as uuidv4 } from 'uuid';
 
+export const audioRefs = {
+    ticking: new Audio('/ticking.mp3'),
+    howl: new Audio('/wolf-howl.mp3'),
+    flip: new Audio('/card-flip.mp3')
+};
+audioRefs.ticking.loop = true;
+
+const unlockAudio = () => {
+    // Chỉ unlock ticking và flip, vì howl sẽ được phát trực tiếp
+    [audioRefs.ticking, audioRefs.flip].forEach(audio => {
+        audio.volume = 0;
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                audio.pause();
+                audio.currentTime = 0;
+                audio.volume = 1;
+            }).catch(() => {});
+        }
+    });
+};
+
 function App() {
     const playerName = useGameStore(state => state.playerName);
     const secretId = useGameStore(state => state.secretId);
@@ -85,9 +107,8 @@ function App() {
             setCountdown(5);
             let timeLeft = 5;
 
-            const tickAudio = new Audio('/ticking.mp3');
-            tickAudio.loop = true;
-            tickAudio.play().catch(e => console.log('Audio error:', e));
+            audioRefs.ticking.volume = 1;
+            audioRefs.ticking.play().catch(e => console.log('Audio error:', e));
 
             const timer = setInterval(() => {
                 timeLeft--;
@@ -95,11 +116,11 @@ function App() {
                     clearInterval(timer);
                     setCountdown(null);
                     
-                    tickAudio.pause();
-                    tickAudio.currentTime = 0;
+                    audioRefs.ticking.pause();
+                    audioRefs.ticking.currentTime = 0;
 
-                    const howlAudio = new Audio('/wolf-howl.mp3');
-                    howlAudio.play().catch(e => console.log('Audio error:', e));
+                    audioRefs.howl.volume = 1;
+                    audioRefs.howl.play().catch(e => console.log('Audio error:', e));
                 } else {
                     setCountdown(timeLeft);
                 }
@@ -107,8 +128,8 @@ function App() {
         };
 
         const onPlayWolfHowl = () => {
-            const audio = new Audio('/wolf-howl.mp3');
-            audio.play().catch(e => console.log('Audio error:', e));
+            audioRefs.howl.volume = 1;
+            audioRefs.howl.play().catch(e => console.log('Audio error:', e));
         };
 
         const onConnect = () => {
@@ -165,7 +186,13 @@ function App() {
         const newSecret = uuidv4();
 
         hasJoinedRef.current = false;
+        unlockAudio(); // Mở khóa âm thanh cho trình duyệt
         setSession(inputName, newSecret, isAdm);
+
+        // Phát tiếng sói hú khi người chơi click tham gia
+        audioRefs.howl.volume = 1;
+        audioRefs.howl.currentTime = 0;
+        audioRefs.howl.play().catch(() => {});
     };
 
     if (!imagesLoaded) {
