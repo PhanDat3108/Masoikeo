@@ -25,9 +25,16 @@ export const PlayerView = () => {
         socket.emit('setStatus', status);
     };
 
+    const [confirmAction, setConfirmAction] = useState(null);
+
     const handleLogout = () => {
-        socket.emit('leaveRoom');
-        clearSession();
+        setConfirmAction({
+            message: "Bạn có chắc chắn muốn rời phòng?",
+            onConfirm: () => {
+                socket.emit('leaveRoom');
+                clearSession();
+            }
+        });
     };
 
     if (!currentPlayer) {
@@ -124,6 +131,20 @@ export const PlayerView = () => {
                     </div>
                 )}
             </div>
+
+            {/* Confirm Modal */}
+            {confirmAction && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-fadeIn">
+                    <div className="gothic-card text-center flex flex-col items-center justify-center p-6 max-w-xs w-11/12 border border-white/20 shadow-2xl">
+                        <div className="text-white/30 text-[10px] tracking-[0.5em] mb-4">— ✦ —</div>
+                        <h3 className="font-heading text-sm text-white/80 mb-6 leading-relaxed px-2">{confirmAction.message}</h3>
+                        <div className="flex gap-3 w-full">
+                            <button onClick={() => setConfirmAction(null)} className="gothic-btn flex-1 py-2 text-xs text-white/50 border-white/20 hover:border-white/40">HUỶ</button>
+                            <button onClick={() => { confirmAction.onConfirm(); setConfirmAction(null); }} className="gothic-btn gothic-btn-danger flex-1 py-2 text-xs">XÁC NHẬN</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

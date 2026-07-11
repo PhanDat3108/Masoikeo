@@ -20,11 +20,17 @@ export const AdminPanel = () => {
         setConfigCopy([...gameState.rolesConfig]);
     }, [gameState.rolesConfig]);
 
-    const handleLogout = () => { socket.emit('leaveRoom'); clearSession(); };
+    const [confirmAction, setConfirmAction] = useState(null);
+
+    const requestConfirm = (message, action) => {
+        setConfirmAction({ message, onConfirm: action });
+    };
+
+    const handleLogout = () => { requestConfirm("Bạn có chắc chắn muốn thoát phòng?", () => { socket.emit('leaveRoom'); clearSession(); }); };
     const handleShuffle = () => { socket.emit('shuffleCards'); };
-    const handleKick = (id) => { if (confirm("Đuổi người chơi này?")) socket.emit('kickPlayer', id); };
-    const handleToggleLife = (id) => { socket.emit('toggleLife', id); };
-    const handleTransformToWolf = (id) => { if (confirm("Biến thành Sói?")) socket.emit('transformToWolf', id); };
+    const handleKick = (id) => { requestConfirm("Đuổi người chơi này khỏi phòng?", () => socket.emit('kickPlayer', id)); };
+    const handleToggleLife = (id, isAlive) => { requestConfirm(isAlive ? "Giết người chơi này?" : "Hồi sinh người chơi này?", () => socket.emit('toggleLife', id)); };
+    const handleTransformToWolf = (id) => { requestConfirm("Biến người chơi này thành Sói?", () => socket.emit('transformToWolf', id)); };
 
     const updateRoleCount = (index, delta) => {
         const nc = [...configCopy];
@@ -45,7 +51,7 @@ export const AdminPanel = () => {
         setConfigCopy(nc); setEditingIdx(null); setEditingName('');
     };
     const cancelEditRole = () => { setEditingIdx(null); setEditingName(''); };
-    const saveConfig = () => { socket.emit('updateConfig', configCopy); };
+    const saveConfig = () => { requestConfirm("Lưu cấu hình bộ bài mới?", () => socket.emit('updateConfig', configCopy)); };
 
     const toggleCoupleSelect = (id) => {
         if (coupleSelection.includes(id)) setCoupleSelection(coupleSelection.filter(x => x !== id));
@@ -276,7 +282,7 @@ export const AdminPanel = () => {
                                                 style={{ fontSize: '12px' }}>𖤐</button>
                                         )}
                                         {!coupleMode && (
-                                            <button onClick={(e) => { e.stopPropagation(); handleToggleLife(p.id); }}
+                                            <button onClick={(e) => { e.stopPropagation(); handleToggleLife(p.id, p.isAlive); }}
                                                 className="text-white/20 hover:text-white/60 p-1 transition-colors"
                                                 title={p.isAlive ? "Giết" : "Hồi sinh"}>
                                                 {p.isAlive ? <Skull size={14} /> : <Heart size={14} />}
@@ -305,6 +311,20 @@ export const AdminPanel = () => {
                 </div>
 
             </div>
+
+            {/* Confirm Modal */}
+            {confirmAction && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-fadeIn">
+                    <div className="gothic-card text-center flex flex-col items-center justify-center p-6 max-w-xs w-11/12 border border-white/20 shadow-2xl">
+                        <div className="text-white/30 text-[10px] tracking-[0.5em] mb-4">— ✦ —</div>
+                        <h3 className="font-heading text-sm text-white/80 mb-6 leading-relaxed px-2">{confirmAction.message}</h3>
+                        <div className="flex gap-3 w-full">
+                            <button onClick={() => setConfirmAction(null)} className="gothic-btn flex-1 py-2 text-xs text-white/50 border-white/20 hover:border-white/40">HUỶ</button>
+                            <button onClick={() => { confirmAction.onConfirm(); setConfirmAction(null); }} className="gothic-btn gothic-btn-danger flex-1 py-2 text-xs">XÁC NHẬN</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
