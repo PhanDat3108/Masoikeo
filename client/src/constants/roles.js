@@ -47,10 +47,9 @@ export const ROLES_CONFIG = [
     // TODO: Nhập link ảnh Sida vào đây
     imageUrl: "https://i.ibb.co/whc6fM2S/Chat-GPT-Image-13-03-42-10-thg-7-2026.png",
   },
-  ,
   {
     id: "cupid",
-    name: "Cupod",
+    name: "Cupid",
     // TODO: Nhập link ảnh Sida vào đây
     imageUrl: "https://i.ibb.co/LdzZVK3p/Chat-GPT-Image-15-01-27-11-thg-7-2026.png",
   }
