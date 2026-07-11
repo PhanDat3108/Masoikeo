@@ -61,3 +61,10 @@ export const GAME_ASSETS = {
   // TODO: Nhập link ảnh background
   backgroundUrl: "https://i.ibb.co/F4vS2Nv0/Chat-GPT-Image-13-38-31-10-thg-7-2026.png"
 };
+
+export const CUSTOM_ROLE_IMAGES = [
+  // TODO: Nhập link ảnh Sáng Tạo 1 vào đây
+  "https://i.ibb.co/RGvm0H20/Chat-GPT-Image-15-21-11-11-thg-7-2026.png",
+  // TODO: Nhập link ảnh Sáng Tạo 2 vào đây
+  "https://i.ibb.co/jZgtFYQm/Chat-GPT-Image-15-22-51-11-thg-7-2026.png"
+];

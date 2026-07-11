@@ -199,7 +199,7 @@ export const AdminPanel = () => {
                                 <Trophy size={12} /> BẢNG XẾP HẠNG
                             </h2>
                             <div className="space-y-1 max-h-[20vh] overflow-y-auto pr-1">
-                                {Object.entries(leaderboard).sort(([, a], [, b]) => b - a).map(([name, wins], i) => (
+                                {Object.entries(leaderboard).sort(([, a], [, b]) => b - a).slice(0, 10).map(([name, wins], i) => (
                                     <div key={name} className="flex justify-between items-center text-xs py-1.5 px-2"
                                          style={{ background: '#111', borderRadius: '2px' }}>
                                         <span className={`${i === 0 ? 'text-white/80' : 'text-white/40'}`}>

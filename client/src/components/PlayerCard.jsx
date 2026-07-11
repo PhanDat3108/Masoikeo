@@ -1,8 +1,20 @@
 import React, { useMemo } from 'react';
-import { ROLES_CONFIG, GAME_ASSETS } from '../constants/roles.js';
+import { ROLES_CONFIG, GAME_ASSETS, CUSTOM_ROLE_IMAGES } from '../constants/roles.js';
+import { useGameStore } from '../store/useGameStore.js';
 
 export const PlayerCard = React.memo(({ role, isFlipped, onClick, countdown = null }) => {
-    const roleConfig = useMemo(() => ROLES_CONFIG.find(r => r.name === role) || { imageUrl: '' }, [role]);
+    const gameState = useGameStore(state => state.gameState);
+
+    const roleConfig = useMemo(() => {
+        const base = ROLES_CONFIG.find(r => r.name === role);
+        if (base) return base;
+
+        const customRoles = gameState?.rolesConfig?.filter(r => !ROLES_CONFIG.some(configRole => configRole.name === r.name)) || [];
+        const customIndex = customRoles.findIndex(r => r.name === role);
+        const imageUrl = customIndex >= 0 ? CUSTOM_ROLE_IMAGES[customIndex % CUSTOM_ROLE_IMAGES.length] : CUSTOM_ROLE_IMAGES[0];
+        
+        return { imageUrl };
+    }, [role, gameState?.rolesConfig]);
     
     const hasBackImage = !!GAME_ASSETS.cardBackUrl;
     const hasFrontImage = !!roleConfig.imageUrl;

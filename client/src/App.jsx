@@ -3,7 +3,7 @@ import { socket } from './socket.js';
 import { useGameStore } from './store/useGameStore.js';
 import { AdminPanel } from './pages/AdminPanel.jsx';
 import { PlayerView } from './pages/PlayerView.jsx';
-import { ROLES_CONFIG, GAME_ASSETS } from './constants/roles.js';
+import { ROLES_CONFIG, GAME_ASSETS, CUSTOM_ROLE_IMAGES } from './constants/roles.js';
 import { usePreloadImages } from './hooks/usePreloadImages.js';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -51,7 +51,8 @@ function App() {
         GAME_ASSETS.cardBackUrl,
         GAME_ASSETS.backgroundUrl,
         "https://i.ibb.co/gkGF615/Chat-GPT-Image-13-46-01-10-thg-7-2026.png",
-        ...ROLES_CONFIG.map(r => r.imageUrl)
+        ...ROLES_CONFIG.map(r => r.imageUrl),
+        ...CUSTOM_ROLE_IMAGES
     ];
     const imagesLoaded = usePreloadImages(allImages);
 
