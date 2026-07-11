@@ -145,6 +145,38 @@ export const PlayerView = () => {
                     </div>
                 </div>
             )}
+
+            {/* Vote Modal */}
+            {gameState.vote?.isActive && currentPlayer.isAlive && (
+                <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-fadeIn p-4">
+                    <div className="gothic-card w-full max-w-sm flex flex-col max-h-[80vh]">
+                        <div className="text-white/30 text-[10px] tracking-[0.5em] mb-4 text-center">— BỎ PHIẾU KÍN —</div>
+                        <h3 className="font-heading text-lg text-red-500/90 mb-4 text-center drop-shadow-md">CHỌN NGƯỜI BỊ TREO CỔ</h3>
+                        
+                        <div className="overflow-y-auto pr-1 flex-1 space-y-2 mb-4">
+                            {gameState.players.filter(p => p.isAlive && !p.isAdmin).map(p => {
+                                const isMyVote = gameState.vote.votes[currentPlayer.id] === p.id;
+                                return (
+                                    <button 
+                                        key={p.id}
+                                        onClick={() => socket.emit('submitVote', p.id)}
+                                        className={`w-full text-left p-3 flex justify-between items-center transition-all ${isMyVote ? 'bg-red-900/30 border border-red-500/50 text-white' : 'bg-[#111] border border-[#222] text-white/60 hover:bg-[#1a1a1a] hover:text-white/90'}`}
+                                        style={{ borderRadius: '2px' }}
+                                    >
+                                        <span className="font-heading text-sm">{p.name}</span>
+                                        {isMyVote && <span className="text-[10px] text-red-400 font-heading">ĐÃ CHỌN</span>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <div className="text-center mt-2">
+                            <p className="text-white/40 text-[10px] italic">Bạn có thể đổi lựa chọn. Kết quả sẽ được giữ bí mật.</p>
+                            <p className="text-white/30 text-[10px] mt-2 font-heading animate-mysticPulse">ĐANG CHỜ QUẢN TRÒ ĐÓNG HÒM PHIẾU...</p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -95,6 +95,11 @@ function App() {
             }, 1000);
         };
 
+        const onPlayWolfHowl = () => {
+            const audio = new Audio('/wolf-howl.mp3');
+            audio.play().catch(e => console.log('Audio error:', e));
+        };
+
         const onConnect = () => {
             const currentName = useGameStore.getState().playerName;
             const currentSecret = useGameStore.getState().secretId;
@@ -113,6 +118,7 @@ function App() {
         socket.on('youAreKicked', onKicked);
         socket.on('gameEnded', onGameEnded);
         socket.on('startCountdown', onStartCountdown);
+        socket.on('playWolfHowl', onPlayWolfHowl);
 
         if (!socket.connected) {
             socket.connect();
@@ -129,6 +135,7 @@ function App() {
             socket.off('youAreKicked', onKicked);
             socket.off('gameEnded', onGameEnded);
             socket.off('startCountdown', onStartCountdown);
+            socket.off('playWolfHowl', onPlayWolfHowl);
         };
     }, []);
 

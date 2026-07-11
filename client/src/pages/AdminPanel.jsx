@@ -67,6 +67,44 @@ export const AdminPanel = () => {
     const couple = gameState.couple || [];
     const hasCouple = couple.length === 2;
 
+    const [timerInput, setTimerInput] = useState(localStorage.getItem('masoi_timer') || '1');
+    const [timeLeftStr, setTimeLeftStr] = useState('');
+    const [timerActive, setTimerActive] = useState(false);
+    
+    React.useEffect(() => {
+        if (gameState.timerEndTime) {
+            setTimerActive(true);
+            const interval = setInterval(() => {
+                const diff = gameState.timerEndTime - Date.now();
+                if (diff <= 0) {
+                    setTimeLeftStr('00:00');
+                    setTimerActive(false);
+                    clearInterval(interval);
+                } else {
+                    const m = Math.floor(diff / 60000);
+                    const s = Math.floor((diff % 60000) / 1000);
+                    setTimeLeftStr(`${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
+                }
+            }, 200);
+            return () => clearInterval(interval);
+        } else {
+            setTimerActive(false);
+            setTimeLeftStr('');
+        }
+    }, [gameState.timerEndTime]);
+
+    const startTimer = () => {
+        const mins = parseFloat(timerInput);
+        if (!isNaN(mins) && mins > 0) {
+            localStorage.setItem('masoi_timer', timerInput);
+            socket.emit('startTimer', mins);
+        }
+    };
+    const stopTimer = () => socket.emit('stopTimer');
+
+    const handleToggleVote = () => socket.emit('toggleVote');
+    const isVoteActive = gameState.vote?.isActive;
+
     return (
         <div className="flex flex-col h-full p-4 md:p-6 max-w-6xl mx-auto w-full overflow-y-auto animate-fadeIn">
             
@@ -198,6 +236,65 @@ export const AdminPanel = () => {
                             </button>
                         </div>
                     </div>
+
+                    {/* Timer & Vote Panel */}
+                    <div className="mb-3 p-3 flex flex-wrap items-center justify-between gap-2" style={{ background: '#111', border: '1px solid #222', borderRadius: '2px' }}>
+                        {/* Timer */}
+                        <div className="flex items-center gap-2">
+                            <span className="text-white/40 text-[10px] font-heading">HẸN GIỜ:</span>
+                            {!timerActive ? (
+                                <>
+                                    <input type="number" step="0.1" value={timerInput} onChange={e => setTimerInput(e.target.value)} className="gothic-input py-1 px-2 text-xs w-16 text-center" />
+                                    <span className="text-white/40 text-[10px] mr-1 font-heading">PHÚT</span>
+                                    <button onClick={startTimer} className="gothic-btn text-[10px] py-1 px-2 gothic-btn-primary">BẮT ĐẦU</button>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="font-heading text-red-500/90 text-lg mx-2 animate-mysticPulse drop-shadow-md">{timeLeftStr}</span>
+                                    <button onClick={stopTimer} className="gothic-btn text-[10px] py-1 px-2 gothic-btn-danger">HUỶ HẸN GIỜ</button>
+                                </>
+                            )}
+                        </div>
+                        {/* Vote controls */}
+                        <button onClick={handleToggleVote} className={`gothic-btn text-[10px] py-1 px-2 ${isVoteActive ? 'gothic-btn-danger !border-red-500/50' : 'gothic-btn-primary'}`}>
+                            {isVoteActive ? 'ĐÓNG VOTE' : 'MỞ BỎ PHIẾU KÍN'}
+                        </button>
+                    </div>
+
+                    {/* Vote Tally */}
+                    {isVoteActive && (
+                        <div className="mb-3 p-3" style={{ background: '#151010', border: '1px solid #311', borderRadius: '2px' }}>
+                            <p className="text-red-500/60 text-xs font-heading tracking-wider mb-2">KẾT QUẢ BỎ PHIẾU KÍN</p>
+                            {(() => {
+                                const votes = gameState.vote?.votes || {};
+                                const voteCounts = {};
+                                Object.entries(votes).forEach(([voterId, votedId]) => {
+                                    voteCounts[votedId] = (voteCounts[votedId] || 0) + 1;
+                                });
+                                const maxVotes = Math.max(0, ...Object.values(voteCounts));
+                                return (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <div className="text-white/30 text-[10px] mb-1 font-heading">CHI TIẾT:</div>
+                                            {Object.entries(votes).map(([voterId, votedId]) => {
+                                                const voter = gameState.players.find(p => p.id === voterId)?.name || 'Ẩn danh';
+                                                const voted = gameState.players.find(p => p.id === votedId)?.name || 'Ẩn danh';
+                                                return <div key={voterId} className="text-xs text-white/50 py-0.5">{voter} ➔ <span className="text-white/90">{voted}</span></div>;
+                                            })}
+                                            {Object.keys(votes).length === 0 && <div className="text-white/30 text-[10px] italic">Chưa có ai bỏ phiếu</div>}
+                                        </div>
+                                        <div>
+                                            <div className="text-white/30 text-[10px] mb-1 font-heading">BỊ VOTE NHIỀU NHẤT:</div>
+                                            {Object.entries(voteCounts).filter(([_, c]) => c === maxVotes && maxVotes > 0).map(([id, c]) => {
+                                                const voted = gameState.players.find(p => p.id === id)?.name || 'Ẩn danh';
+                                                return <div key={id} className="text-sm font-heading text-red-500/90 drop-shadow-md py-0.5">{voted} ({c} phiếu)</div>;
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    )}
 
                     {/* Warnings */}
                     {readyCount > 0 && readyCount !== totalCards && (

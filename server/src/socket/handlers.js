@@ -1,6 +1,8 @@
 import { gameState, matchData } from '../state/gameState.js';
 import { shuffleAndDistributeCards, checkAdmin } from './gameLogic.js';
 
+let timerTimeout = null;
+
 export const registerHandlers = (io, socket) => {
     // Gửi data ban đầu
     socket.emit('updateRolesConfig', gameState.rolesConfig);
@@ -158,6 +160,48 @@ export const registerHandlers = (io, socket) => {
         io.emit('updateLeaderboard', matchData.leaderboard);
         io.emit('updateState', gameState);
         io.emit('gameEnded', { team, winners });
+    });
+
+    // Hẹn giờ
+    socket.on('startTimer', (minutes) => {
+        if (checkAdmin(socket.id)) {
+            if (timerTimeout) clearTimeout(timerTimeout);
+            const durationMs = minutes * 60 * 1000;
+            gameState.timerEndTime = Date.now() + durationMs;
+            io.emit('updateState', gameState);
+            
+            timerTimeout = setTimeout(() => {
+                gameState.timerEndTime = null;
+                io.emit('updateState', gameState);
+                io.emit('playWolfHowl');
+            }, durationMs);
+        }
+    });
+
+    socket.on('stopTimer', () => {
+        if (checkAdmin(socket.id)) {
+            if (timerTimeout) clearTimeout(timerTimeout);
+            gameState.timerEndTime = null;
+            io.emit('updateState', gameState);
+        }
+    });
+
+    // Bỏ phiếu kín
+    socket.on('toggleVote', () => {
+        if (checkAdmin(socket.id)) {
+            gameState.vote.isActive = !gameState.vote.isActive;
+            if (gameState.vote.isActive) {
+                gameState.vote.votes = {}; // Xoá phiếu cũ khi mở lại
+            }
+            io.emit('updateState', gameState);
+        }
+    });
+
+    socket.on('submitVote', (votedId) => {
+        if (gameState.vote.isActive) {
+            gameState.vote.votes[socket.id] = votedId;
+            io.emit('updateState', gameState);
+        }
     });
 
     // Player action
