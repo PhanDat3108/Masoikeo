@@ -96,7 +96,13 @@ export const PlayerView = () => {
                         <PlayerCard
                             role={currentPlayer.role}
                             isFlipped={isFlipped}
-                            onClick={() => setIsFlipped(!isFlipped)}
+                            onClick={() => {
+                                setIsFlipped(!isFlipped);
+                                if (!isFlipped) {
+                                    const audio = new Audio('/card-flip.mp3');
+                                    audio.play().catch(e => console.log('Audio error:', e));
+                                }
+                            }}
                             countdown={countdown}
                         />
                         <p className="text-white/60 text-xs tracking-[0.3em] font-heading animate-mysticPulse drop-shadow-md">
