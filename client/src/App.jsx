@@ -84,11 +84,22 @@ function App() {
         const onStartCountdown = () => {
             setCountdown(5);
             let timeLeft = 5;
+
+            const tickAudio = new Audio('/ticking.mp3');
+            tickAudio.loop = true;
+            tickAudio.play().catch(e => console.log('Audio error:', e));
+
             const timer = setInterval(() => {
                 timeLeft--;
                 if (timeLeft <= 0) {
                     clearInterval(timer);
                     setCountdown(null);
+                    
+                    tickAudio.pause();
+                    tickAudio.currentTime = 0;
+
+                    const howlAudio = new Audio('/wolf-howl.mp3');
+                    howlAudio.play().catch(e => console.log('Audio error:', e));
                 } else {
                     setCountdown(timeLeft);
                 }
