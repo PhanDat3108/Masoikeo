@@ -70,11 +70,11 @@
     }
   }
 
-  --font-heading: 'Cinzel',
+  --font-heading: 'Cormorant Garamond',
   'Times New Roman',
   serif;
-  --font-display: 'Cinzel Decorative',
-  'Cinzel',
+  --font-display: 'Cormorant Garamond',
+  'Times New Roman',
   serif;
   --font-body: 'Inter',
   system-ui,
