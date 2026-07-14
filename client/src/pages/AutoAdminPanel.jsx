@@ -336,8 +336,8 @@ export const AutoAdminPanel = () => {
                                         </span>
                                     )}
                                     {/* Nút Kick */}
-                                    <button onClick={() => handleKick(p.id, p.name)} className="text-red-500/50 hover:text-red-500 ml-2" title="Đuổi người chơi">
-                                        <X size={12} />
+                                    <button onClick={() => handleKick(p.id, p.name)} className="text-red-500/60 hover:text-red-400 ml-3 text-[9px] font-heading px-1.5 py-0.5 border border-red-500/30 rounded-sm" title="Đuổi người chơi khỏi phòng">
+                                        KICK
                                     </button>
                                 </div>
                             </div>
@@ -372,7 +372,7 @@ export const AutoAdminPanel = () => {
 
             {/* Game Log Popup (Chỉ hiện khi GAME OVER) */}
             {autoGMState?.phase === 'GAME_OVER' && !isLogClosed && (
-                <GameLogPopup logs={autoGMState.gameLog} onClose={() => setIsLogClosed(true)} />
+                <GameLogPopup logs={autoGMState?.gameLog || []} onClose={() => setIsLogClosed(true)} />
             )}
 
             {/* Popups tổng kết ban ngày */}
@@ -394,7 +394,7 @@ export const AutoAdminPanel = () => {
 // =============================================
 
 // Game Log Popup Component
-export const GameLogPopup = ({ logs, onClose }) => {
+export const GameLogPopup = ({ logs = [], onClose }) => {
     // Nhóm logs theo Ngày/Đêm
     const groupedLogs = [];
     let currentGroup = { title: "Bắt đầu Game", logs: [] };
