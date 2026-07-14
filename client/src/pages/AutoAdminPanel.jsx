@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { socket } from '../socket.js';
 import { useGameStore } from '../store/useGameStore.js';
 import { LogOut, Play, Pause, Square, SkipForward, Settings, Users, Skull, Heart, Trophy, X } from 'lucide-react';
-import { DayAnnouncePopup, DayExecutePopup } from './AutoPlayerView.jsx';
+import { DayAnnouncePopup, DayExecutePopup } from '../components/DayPopups.jsx';
 import { GameLogPopup } from '../components/GameLogPopup.jsx';
 
 // Phase labels cho hiển thị
