@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { socket } from '../socket.js';
 import { useGameStore } from '../store/useGameStore.js';
-import { LogOut, Play, Pause, Square, SkipForward, Settings, Users, Skull, Heart, Trophy } from 'lucide-react';
+import { LogOut, Play, Pause, Square, SkipForward, Settings, Users, Skull, Heart, Trophy, X } from 'lucide-react';
+import { DayAnnouncePopup, DayExecutePopup } from './AutoPlayerView.jsx';
 
 // Phase labels cho hiển thị
 const PHASE_LABELS = {
@@ -89,6 +90,7 @@ export const AutoAdminPanel = () => {
     const handleResume = () => { socket.emit('autoGM:resume'); };
     const handleStop = () => { requestConfirm("Hủy ván hiện tại và đưa mọi người về phòng chờ (Reset)?", () => { socket.emit('autoGM:stop'); setIsLogClosed(false); }); };
     const handleSkip = () => { requestConfirm("Tua qua bước hiện tại?", () => socket.emit('autoGM:skipPhase')); };
+    const handleKick = (playerId, playerName) => { requestConfirm(`Đuổi người chơi ${playerName}?`, () => socket.emit('kickPlayer', playerId)); };
 
     const players = gameState.players.filter(p => !p.isAdmin);
     const totalCards = configCopy.reduce((acc, curr) => acc + curr.count, 0);
@@ -330,6 +332,10 @@ export const AutoAdminPanel = () => {
                                             )}
                                         </span>
                                     )}
+                                    {/* Nút Kick */}
+                                    <button onClick={() => handleKick(p.id, p.name)} className="text-red-500/50 hover:text-red-500 ml-2" title="Đuổi người chơi">
+                                        <X size={12} />
+                                    </button>
                                 </div>
                             </div>
                         ))}
@@ -362,8 +368,19 @@ export const AutoAdminPanel = () => {
             )}
 
             {/* Game Log Popup (Chỉ hiện khi GAME OVER) */}
-            {phase === 'GAME_OVER' && autoGMState?.gameLog && !isLogClosed && (
+            {autoGMState?.phase === 'GAME_OVER' && !isLogClosed && (
                 <GameLogPopup logs={autoGMState.gameLog} onClose={() => setIsLogClosed(true)} />
+            )}
+
+            {/* Popups tổng kết ban ngày */}
+            {autoGMState?.phase === 'DAY_ANNOUNCE' && (
+                <DayAnnouncePopup deathMessages={autoGMState?.dayActions?.deathMessages || []} />
+            )}
+            {autoGMState?.phase === 'DAY_EXECUTE' && (
+                <DayExecutePopup 
+                    executedPlayer={autoGMState?.dayActions?.executedPlayer}
+                    players={players}
+                />
             )}
         </div>
     );

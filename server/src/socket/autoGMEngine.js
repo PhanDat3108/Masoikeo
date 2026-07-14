@@ -787,8 +787,8 @@ const startDay = (io) => {
 
     addGameLog('PHASE_CHANGE', { to: 'DAY', dayCount: autoGM.dayCount });
 
-    // Công bố người chết (hiện trên UI một lúc rồi chuyển sang thảo luận)
-    setPhaseTimer(io, 8, () => {
+    // Công bố người chết (hiện popup đếm ngược 5s + 7s đọc tên)
+    setPhaseTimer(io, 12, () => {
         startDiscussion(io);
     });
     broadcastState(io);
@@ -846,7 +846,7 @@ export const resolveDayVote = (io) => {
         addGameLog('VOTE_RESULT', { result: 'no_votes' });
         autoGM.dayActions.isRevote = false;
         autoGM.dayActions.revoteTargets = [];
-        afterDayExecution(io);
+        startDayExecute(io);
         return;
     }
 
@@ -883,7 +883,17 @@ export const resolveDayVote = (io) => {
         autoGM.dayActions.revoteTargets = [];
     }
 
-    afterDayExecution(io);
+    startDayExecute(io);
+};
+
+const startDayExecute = (io) => {
+    autoGM.phase = PHASES.DAY_EXECUTE;
+    broadcastState(io);
+    
+    // Hiện popup tổng kết treo cổ trong 6 giây rồi đi tiếp
+    setPhaseTimer(io, 6, () => {
+        afterDayExecution(io);
+    });
 };
 
 const executePlayer = (io, targetId, maxVotes) => {
