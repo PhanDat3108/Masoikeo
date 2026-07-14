@@ -3,7 +3,7 @@ import { socket } from '../socket.js';
 import { useGameStore } from '../store/useGameStore.js';
 import { PlayerCard } from '../components/PlayerCard.jsx';
 import { SkillPopup, SeerResultPopup } from '../components/SkillPopup.jsx';
-import { GameLogPopup } from './AutoAdminPanel.jsx';
+import { GameLogPopup } from '../components/GameLogPopup.jsx';
 import { LogOut } from 'lucide-react';
 
 // Mô tả kỹ năng ngắn cho hiển thị trên card
