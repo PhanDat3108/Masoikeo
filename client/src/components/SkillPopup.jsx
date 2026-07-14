@@ -60,6 +60,80 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
         setWitchKill(null);
     };
 
+    // ========== RENDER BỎ PHIẾU BAN NGÀY ==========
+    if (phase === 'DAY_VOTE') {
+        const isRevote = autoGMState?.dayActions?.isRevote;
+        const revoteTargets = autoGMState?.dayActions?.revoteTargets || [];
+        const votes = autoGMState?.dayActions?.votes || {};
+
+        let renderPlayers = alivePlayers;
+        if (isRevote) {
+            renderPlayers = players.filter(p => revoteTargets.includes(p.id) && p.id !== myId);
+        }
+
+        const handleVote = (targetId) => {
+            socket.emit('autoGM:dayVote', targetId);
+            onClose();
+            setSelectedTarget(null);
+        };
+
+        return (
+            <PopupWrapper onClose={onClose} title={isRevote ? "BỎ PHIẾU LẠI (HÒA PHIẾU)" : "BỎ PHIẾU BAN NGÀY"} icon={<Crosshair size={16} />}>
+                <p className="text-white/40 text-xs mb-3 text-center" style={{ fontFamily: 'var(--font-body)' }}>
+                    {isRevote ? 'Chỉ được chọn 1 trong những người sau:' : 'Chọn 1 người chơi để vote treo cổ:'}
+                </p>
+
+                {/* Danh sách người để chọn */}
+                <PlayerList
+                    players={renderPlayers}
+                    selectedIds={selectedTarget ? [selectedTarget] : []}
+                    onSelect={(id) => setSelectedTarget(id)}
+                    myId={myId}
+                />
+                
+                {/* Nút hành động */}
+                <div className="flex gap-2 mt-4">
+                    <button
+                        onClick={() => handleVote('skip')}
+                        className="gothic-btn flex-1 py-2.5 text-xs text-white/50 hover:text-white"
+                        style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+                    >
+                        BỎ QUA / TRẮNG
+                    </button>
+                    <button
+                        onClick={() => handleVote(selectedTarget)}
+                        disabled={!selectedTarget}
+                        className="gothic-btn gothic-btn-primary flex-1 py-2.5 text-xs"
+                    >
+                        CHỐT PHIẾU
+                    </button>
+                </div>
+
+                {/* Danh sách phiếu public realtime */}
+                {Object.keys(votes).length > 0 && (
+                    <div className="mt-6 border-t border-white/5 pt-4">
+                        <p className="text-white/30 text-[10px] font-heading mb-2">TÌNH HÌNH PHIẾU BẦU:</p>
+                        <div className="flex flex-col gap-1 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
+                            {Object.entries(votes).map(([voterId, targetId]) => {
+                                const voter = players.find(p => p.id === voterId);
+                                const target = players.find(p => p.id === targetId);
+                                return (
+                                    <div key={voterId} className="flex items-center justify-between text-xs py-1 px-2 bg-white/5 rounded-sm">
+                                        <span className="text-white/70 truncate w-1/3">{voter?.name}</span>
+                                        <span className="text-white/30 text-[10px]">vote</span>
+                                        <span className="text-red-400/80 truncate w-1/3 text-right">
+                                            {targetId === 'skip' ? 'Bỏ qua' : target?.name}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+            </PopupWrapper>
+        );
+    }
+
     // ========== RENDER THEO ROLE ==========
 
     // Dân Ngu, Sida, Kẻ Bị Nguyền (chưa chuyển phe) — chỉ popup giải thích
@@ -106,13 +180,16 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
                     onSelect={toggleCupidTarget}
                     myId={myId}
                 />
-                <button
-                    onClick={() => handleSubmit('cupid_pair', { targets: cupidTargets })}
-                    disabled={cupidTargets.length !== 2}
-                    className="gothic-btn gothic-btn-primary w-full py-2.5 mt-4"
-                >
-                    XÁC NHẬN GHÉP ĐÔI
-                </button>
+                <div className="flex gap-2 mt-4">
+                    <button onClick={() => handleSubmit('cupid_pair', { targets: 'skip' })} className="gothic-btn flex-1 py-2.5 text-xs text-white/50 hover:text-white" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>BỎ QUA</button>
+                    <button
+                        onClick={() => handleSubmit('cupid_pair', { targets: cupidTargets })}
+                        disabled={cupidTargets.length !== 2}
+                        className="gothic-btn gothic-btn-primary flex-1 py-2.5"
+                    >
+                        XÁC NHẬN GHÉP ĐÔI
+                    </button>
+                </div>
             </PopupWrapper>
         );
     }
@@ -156,13 +233,16 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
                     onSelect={(id) => setSelectedTarget(id)}
                     myId={myId}
                 />
-                <button
-                    onClick={() => handleSubmit('wolf_vote', { targetId: selectedTarget })}
-                    disabled={!selectedTarget}
-                    className="gothic-btn gothic-btn-primary w-full py-2.5 mt-4"
-                >
-                    XÁC NHẬN CẮN
-                </button>
+                <div className="flex gap-2 mt-4">
+                    <button onClick={() => handleSubmit('wolf_vote', { targetId: 'skip' })} className="gothic-btn flex-1 py-2.5 text-xs text-white/50 hover:text-white" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>BỎ QUA</button>
+                    <button
+                        onClick={() => handleSubmit('wolf_vote', { targetId: selectedTarget })}
+                        disabled={!selectedTarget}
+                        className="gothic-btn gothic-btn-primary flex-1 py-2.5 text-xs"
+                    >
+                        XÁC NHẬN CẮN
+                    </button>
+                </div>
             </PopupWrapper>
         );
     }
@@ -199,13 +279,16 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
                     onSelect={(id) => setSelectedTarget(id)}
                     myId={myId}
                 />
-                <button
-                    onClick={() => handleSubmit('seer_check', { targetId: selectedTarget })}
-                    disabled={!selectedTarget}
-                    className="gothic-btn gothic-btn-primary w-full py-2.5 mt-4"
-                >
-                    SOI
-                </button>
+                <div className="flex gap-2 mt-4">
+                    <button onClick={() => handleSubmit('seer_check', { targetId: 'skip' })} className="gothic-btn flex-1 py-2.5 text-xs text-white/50 hover:text-white" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>BỎ QUA</button>
+                    <button
+                        onClick={() => handleSubmit('seer_check', { targetId: selectedTarget })}
+                        disabled={!selectedTarget}
+                        className="gothic-btn gothic-btn-primary flex-1 py-2.5"
+                    >
+                        SOI
+                    </button>
+                </div>
             </PopupWrapper>
         );
     }
@@ -235,13 +318,16 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
                     onSelect={(id) => { setSelectedTarget(id); clearSkillError(); }}
                     myId={myId}
                 />
-                <button
-                    onClick={() => handleSubmit('guard_protect', { targetId: selectedTarget })}
-                    disabled={!selectedTarget}
-                    className="gothic-btn gothic-btn-primary w-full py-2.5 mt-4"
-                >
-                    BẢO VỆ
-                </button>
+                <div className="flex gap-2 mt-4">
+                    <button onClick={() => handleSubmit('guard_protect', { targetId: 'skip' })} className="gothic-btn flex-1 py-2.5 text-xs text-white/50 hover:text-white" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>BỎ QUA</button>
+                    <button
+                        onClick={() => handleSubmit('guard_protect', { targetId: selectedTarget })}
+                        disabled={!selectedTarget}
+                        className="gothic-btn gothic-btn-primary flex-1 py-2.5"
+                    >
+                        BẢO VỆ
+                    </button>
+                </div>
             </PopupWrapper>
         );
     }
@@ -258,17 +344,30 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
                     onSelect={(id) => setSelectedTarget(id)}
                     myId={myId}
                 />
-                <button
-                    onClick={() => {
-                        socket.emit('autoGM:hunterAim', selectedTarget);
-                        onClose();
-                        setSelectedTarget(null);
-                    }}
-                    disabled={!selectedTarget}
-                    className="gothic-btn gothic-btn-primary w-full py-2.5 mt-4"
-                >
-                    NHẮM MỤC TIÊU
-                </button>
+                <div className="flex gap-2 mt-4">
+                    <button 
+                        onClick={() => {
+                            socket.emit('autoGM:hunterAim', 'skip');
+                            onClose();
+                            setSelectedTarget(null);
+                        }} 
+                        className="gothic-btn flex-1 py-2.5 text-xs text-white/50 hover:text-white" 
+                        style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+                    >
+                        BỎ QUA
+                    </button>
+                    <button
+                        onClick={() => {
+                            socket.emit('autoGM:hunterAim', selectedTarget);
+                            onClose();
+                            setSelectedTarget(null);
+                        }}
+                        disabled={!selectedTarget}
+                        className="gothic-btn gothic-btn-primary flex-1 py-2.5"
+                    >
+                        NHẮM MỤC TIÊU
+                    </button>
+                </div>
             </PopupWrapper>
         );
     }
@@ -326,18 +425,21 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
                     <p className="text-white/30 text-xs italic mb-3">Bình thuốc độc đã dùng hết.</p>
                 )}
 
-                <button
-                    onClick={() => handleSubmit('witch_action', { heal: witchHeal, kill: witchKill })}
-                    className="gothic-btn gothic-btn-primary w-full py-2.5 mt-4"
-                >
-                    XÁC NHẬN
-                </button>
-                <button
-                    onClick={() => handleSubmit('witch_action', { heal: null, kill: null })}
-                    className="gothic-btn w-full py-2 mt-2 text-white/40"
-                >
-                    KHÔNG LÀM GÌ
-                </button>
+                <div className="flex gap-2 mt-4">
+                    <button
+                        onClick={() => handleSubmit('witch_action', { heal: 'skip', kill: 'skip' })}
+                        className="gothic-btn flex-1 py-2 text-xs text-white/50 hover:text-white"
+                        style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+                    >
+                        BỎ QUA TẤT CẢ
+                    </button>
+                    <button
+                        onClick={() => handleSubmit('witch_action', { heal: witchHeal, kill: witchKill })}
+                        className="gothic-btn gothic-btn-primary flex-1 py-2.5"
+                    >
+                        XÁC NHẬN
+                    </button>
+                </div>
             </PopupWrapper>
         );
     }

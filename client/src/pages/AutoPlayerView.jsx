@@ -69,8 +69,13 @@ export const AutoPlayerView = () => {
         }
     }, [countdown, hasRole]);
 
+    const isDayVote = autoGMState?.phase === 'DAY_VOTE';
+    const hasVoted = autoGMState?.dayActions?.votes?.[socket.id] !== undefined;
+
     const isMyTurn = (() => {
-        if (!currentPlayer?.isAlive || !isNight) return false;
+        if (!currentPlayer?.isAlive) return false;
+        if (isDayVote) return !hasVoted;
+        if (!isNight) return false;
         if (currentTurnRole === role) return true;
         // Sói (bao gồm Kẻ bị nguyền đã chuyển)
         if (currentTurnRole === 'Sói' && autoGMState?.myMeta?.team === 'WOLF') return true;
@@ -201,11 +206,11 @@ export const AutoPlayerView = () => {
             <div className="mt-16 flex-1 flex flex-col items-center justify-center w-full">
                 {hasRole && isInGame ? (
                     <div className="w-full flex flex-col items-center space-y-4">
-                        {/* Lá bài nhân vật — luôn hiển thị ngửa khi đang trong game */}
+                        {/* Lá bài nhân vật */}
                         <PlayerCard
                             role={currentPlayer.role}
-                            isFlipped={true}
-                            onClick={() => {}}
+                            isFlipped={isFlipped}
+                            onClick={() => setIsFlipped(!isFlipped)}
                             countdown={null}
                         />
 
@@ -227,17 +232,20 @@ export const AutoPlayerView = () => {
                             </div>
                         )}
 
-                        {/* Nút SỬ DỤNG KỸ NĂNG */}
+                        {/* Nút SỬ DỤNG KỸ NĂNG / BỎ PHIẾU */}
                         {currentPlayer.isAlive && (
                             <button
                                 onClick={handleSkillButton}
+                                disabled={isDayVote && hasVoted}
                                 className={`gothic-btn w-full max-w-xs py-3 flex items-center justify-center gap-2 ${
                                     isMyTurn ? 'gothic-btn-primary animate-mysticPulse !border-white/60' : ''
-                                }`}
+                                } ${isDayVote && hasVoted ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 style={isMyTurn ? { boxShadow: '0 0 20px rgba(255,255,255,0.1)' } : {}}
                             >
                                 <Zap size={16} />
-                                {isMyTurn ? 'SỬ DỤNG KỸ NĂNG — ĐẾN LƯỢT BẠN!' : 'SỬ DỤNG KỸ NĂNG'}
+                                {isDayVote 
+                                    ? (hasVoted ? 'ĐÃ BỎ PHIẾU' : 'BỎ PHIẾU') 
+                                    : (isMyTurn ? 'SỬ DỤNG KỸ NĂNG — ĐẾN LƯỢT BẠN!' : 'SỬ DỤNG KỸ NĂNG')}
                             </button>
                         )}
 

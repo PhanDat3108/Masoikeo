@@ -62,6 +62,9 @@ export const getAutoGMStateForClient = (socketId) => {
         dayActions: {
             deaths: autoGM.dayActions.deaths,
             deathMessages: autoGM.dayActions.deathMessages,
+            votes: autoGM.phase === PHASES.DAY_VOTE ? autoGM.dayActions.votes : {},
+            isRevote: autoGM.dayActions.isRevote,
+            revoteTargets: autoGM.dayActions.revoteTargets,
         },
     };
 
@@ -803,12 +806,20 @@ const startDiscussion = (io) => {
 
 const startDayVote = (io) => {
     autoGM.phase = PHASES.DAY_VOTE;
-    autoGM.dayActions.votes = {};
-    addGameLog('PHASE_CHANGE', { to: 'DAY_VOTE' });
+    autoGM.dayActions.votes = {}; // Reset phiếu mỗi lần mở vote
 
-    setPhaseTimer(io, autoGM.settings.voteDuration, () => {
-        resolveDayVote(io);
-    });
+    if (autoGM.dayActions.isRevote) {
+        addGameLog('PHASE_CHANGE', { to: 'DAY_REVOTE' });
+        // Re-vote chỉ 15 giây
+        setPhaseTimer(io, 15, () => {
+            resolveDayVote(io);
+        });
+    } else {
+        addGameLog('PHASE_CHANGE', { to: 'DAY_VOTE' });
+        setPhaseTimer(io, autoGM.settings.voteDuration, () => {
+            resolveDayVote(io);
+        });
+    }
     broadcastState(io);
 };
 
@@ -818,16 +829,23 @@ export const resolveDayVote = (io) => {
 
     const votes = autoGM.dayActions.votes;
     const voteCounts = {};
+    
+    // N: Số người sống, dùng để tính tỷ lệ
+    const alivePlayers = gameState.players.filter(p => p.isAlive && !p.isAdmin);
+    const aliveCount = alivePlayers.length;
+
     Object.values(votes).forEach(targetId => {
-        if (targetId) {
+        if (targetId && targetId !== 'skip') {
             voteCounts[targetId] = (voteCounts[targetId] || 0) + 1;
         }
     });
 
-    const maxVotes = Math.max(0, ...Object.values(voteCounts));
+    const maxVotes = Object.keys(voteCounts).length > 0 ? Math.max(...Object.values(voteCounts)) : 0;
     if (maxVotes === 0) {
-        // Không ai vote → không treo ai
+        // Không ai vote hoặc toàn vote trắng → không treo ai
         addGameLog('VOTE_RESULT', { result: 'no_votes' });
+        autoGM.dayActions.isRevote = false;
+        autoGM.dayActions.revoteTargets = [];
         afterDayExecution(io);
         return;
     }
@@ -836,31 +854,55 @@ export const resolveDayVote = (io) => {
         .filter(([_, count]) => count === maxVotes)
         .map(([id]) => id);
 
-    if (topTargets.length === 1) {
-        // Có người bị treo
-        const targetId = topTargets[0];
-        const target = gameState.players.find(p => p.id === targetId);
-        const targetMeta = autoGM.playerMeta[targetId];
-
-        // Kiểm tra Sida
-        if (targetMeta?.originalRole === 'Sida') {
-            addGameLog('SIDA_HANGED', { player: target?.name });
-            endGame(io, { winner: TEAMS.SIDA, reason: 'Sida bị dân làng treo cổ!' });
+    if (!autoGM.dayActions.isRevote) {
+        // LẦN 1
+        if (topTargets.length === 1 && maxVotes >= Math.ceil(aliveCount / 2)) {
+            // Treo cổ thành công (đủ 50%)
+            executePlayer(io, topTargets[0], maxVotes);
+        } else if (topTargets.length >= 2 && maxVotes >= Math.ceil(aliveCount * 0.3)) {
+            // Hòa phiếu và đủ 30% -> Bỏ phiếu lại
+            addGameLog('VOTE_TIE', { tied: topTargets, votes: maxVotes, action: 'revote' });
+            autoGM.dayActions.isRevote = true;
+            autoGM.dayActions.revoteTargets = topTargets;
+            startDayVote(io); // Bắt đầu lại lần 2
             return;
-        }
-
-        // Treo cổ
-        if (target) {
-            target.isAlive = false;
-            autoGM.dayActions.executedPlayer = targetId;
-            addGameLog('HANGED', { player: target.name, playerId: targetId, votes: maxVotes });
+        } else {
+            // Không đạt điều kiện treo -> Không ai chết
+            addGameLog('VOTE_FAILED', { topTargets, votes: maxVotes, reason: 'not_enough_votes' });
         }
     } else {
-        // Hòa phiếu → không treo ai
-        addGameLog('VOTE_TIE', { tied: topTargets, votes: maxVotes });
+        // LẦN 2 (Re-vote)
+        if (topTargets.length === 1 && maxVotes >= Math.ceil(aliveCount / 2)) {
+            // Ai cao phiếu hơn và đủ 50% thì chết
+            executePlayer(io, topTargets[0], maxVotes);
+        } else {
+            // Hòa tiếp hoặc không đủ 50% -> Không ai chết
+            addGameLog('VOTE_TIE_FINAL', { tied: topTargets, votes: maxVotes });
+        }
+        autoGM.dayActions.isRevote = false;
+        autoGM.dayActions.revoteTargets = [];
     }
 
     afterDayExecution(io);
+};
+
+const executePlayer = (io, targetId, maxVotes) => {
+    const target = gameState.players.find(p => p.id === targetId);
+    const targetMeta = autoGM.playerMeta[targetId];
+
+    // Kiểm tra Sida
+    if (targetMeta?.originalRole === 'Sida') {
+        addGameLog('SIDA_HANGED', { player: target?.name });
+        endGame(io, { winner: TEAMS.SIDA, reason: 'Sida bị dân làng treo cổ!' });
+        return;
+    }
+
+    // Treo cổ
+    if (target) {
+        target.isAlive = false;
+        autoGM.dayActions.executedPlayer = targetId;
+        addGameLog('HANGED', { player: target.name, playerId: targetId, votes: maxVotes });
+    }
 };
 
 const afterDayExecution = (io) => {
@@ -905,6 +947,12 @@ const advanceDayPhase = (io) => {
 
 export const handleCupidAction = (io, targets) => {
     if (autoGM.phase !== PHASES.NIGHT_CUPID) return;
+    if (targets === 'skip') {
+        clearPhaseTimer();
+        addGameLog('SKILL_SKIP', { role: 'Cupid', reason: 'player_skipped' });
+        afterCupid(io);
+        return;
+    }
     if (!Array.isArray(targets) || targets.length !== 2) return;
 
     clearPhaseTimer();
@@ -955,8 +1003,13 @@ export const handleSkillSubmit = (io, socketId, action) => {
 
         case PHASES.NIGHT_WOLF:
             if (isWolf(socketId) && action.type === 'wolf_vote') {
-                autoGM.nightActions.wolfVotes[socketId] = action.targetId;
-                addGameLog('WOLF_VOTE', { wolf: player.name, target: action.targetId });
+                if (action.targetId === 'skip') {
+                    autoGM.nightActions.wolfVotes[socketId] = 'skip';
+                    addGameLog('WOLF_VOTE', { wolf: player.name, target: 'skip' });
+                } else {
+                    autoGM.nightActions.wolfVotes[socketId] = action.targetId;
+                    addGameLog('WOLF_VOTE', { wolf: player.name, target: action.targetId });
+                }
                 broadcastState(io);
 
                 // Kiểm tra tất cả sói đã vote chưa
@@ -972,6 +1025,13 @@ export const handleSkillSubmit = (io, socketId, action) => {
             if (currentRole === 'Tiên tri' && action.type === 'seer_check') {
                 clearPhaseTimer();
                 const targetId = action.targetId;
+                
+                if (targetId === 'skip') {
+                    addGameLog('SKILL_SKIP', { role: 'Tiên tri', reason: 'player_skipped' });
+                    afterSeer(io);
+                    break;
+                }
+
                 const targetMeta = autoGM.playerMeta[targetId];
                 const targetPlayer = gameState.players.find(p => p.id === targetId);
 
@@ -1006,6 +1066,12 @@ export const handleSkillSubmit = (io, socketId, action) => {
             if (currentRole === 'Bảo vệ' && action.type === 'guard_protect') {
                 clearPhaseTimer();
                 const targetId = action.targetId;
+                
+                if (targetId === 'skip') {
+                    addGameLog('SKILL_SKIP', { role: 'Bảo vệ', reason: 'player_skipped' });
+                    afterGuard(io);
+                    break;
+                }
 
                 // Không được bảo vệ cùng 1 người 2 đêm liên tiếp
                 if (targetId === autoGM.nightActions.lastGuardTarget) {
@@ -1029,9 +1095,15 @@ export const handleSkillSubmit = (io, socketId, action) => {
         case PHASES.NIGHT_WITCH:
             if (currentRole === 'Phù Thuỷ' && action.type === 'witch_action') {
                 clearPhaseTimer();
+                
+                if (action.heal === 'skip' && action.kill === 'skip') {
+                    addGameLog('SKILL_SKIP', { role: 'Phù Thuỷ', reason: 'player_skipped' });
+                    afterWitch(io);
+                    break;
+                }
 
                 // Cứu
-                if (action.heal && !autoGM.nightActions.witchHealUsed) {
+                if (action.heal && action.heal !== 'skip' && !autoGM.nightActions.witchHealUsed) {
                     autoGM.nightActions.witchHealTarget = action.heal;
                     autoGM.nightActions.witchHealUsed = true;
                     const healTarget = gameState.players.find(p => p.id === action.heal);
@@ -1039,7 +1111,7 @@ export const handleSkillSubmit = (io, socketId, action) => {
                 }
 
                 // Giết
-                if (action.kill && !autoGM.nightActions.witchKillUsed) {
+                if (action.kill && action.kill !== 'skip' && !autoGM.nightActions.witchKillUsed) {
                     autoGM.nightActions.witchKillTarget = action.kill;
                     autoGM.nightActions.witchKillUsed = true;
                     const killTarget = gameState.players.find(p => p.id === action.kill);
@@ -1050,8 +1122,7 @@ export const handleSkillSubmit = (io, socketId, action) => {
             }
             break;
 
-        case PHASES.NIGHT_WOLF: // Thợ săn chọn mục tiêu nhắm sẵn
-            // Thợ săn nhắm mục tiêu mỗi đêm (phase riêng không cần, nhắm trong wolf phase cũng được)
+        case PHASES.NIGHT_WOLF: // Thợ săn chọn mục tiêu nhắm sẵn (nếu gửi submit qua skill button ban đêm)
             break;
 
         default:
@@ -1065,6 +1136,12 @@ export const handleHunterAim = (io, socketId, targetId) => {
     if (!player || !player.isAlive) return;
     const meta = autoGM.playerMeta[socketId];
     if (meta?.originalRole !== 'Thợ săn') return;
+
+    if (targetId === 'skip') {
+        autoGM.nightActions.hunterTarget = null;
+        addGameLog('HUNTER_AIM', { hunter: player.name, target: 'skip' });
+        return;
+    }
 
     autoGM.nightActions.hunterTarget = targetId;
     const target = gameState.players.find(p => p.id === targetId);
@@ -1080,6 +1157,13 @@ export const handleHunterShot = (io, socketId, targetId) => {
     if (meta?.originalRole !== 'Thợ săn') return;
 
     clearPhaseTimer();
+    
+    if (targetId === 'skip') {
+        addGameLog('SKILL_SKIP', { role: 'Thợ săn', reason: 'player_skipped' });
+        autoGM.currentTurnRole = null;
+        checkDayCouple(io);
+        return;
+    }
 
     const target = gameState.players.find(p => p.id === targetId);
     if (target && target.isAlive) {
@@ -1101,8 +1185,21 @@ export const handleDayVote = (io, socketId, targetId) => {
     const player = gameState.players.find(p => p.id === socketId);
     if (!player || player.isAdmin || !player.isAlive) return;
 
+    // Không cho phép đổi vote
+    if (autoGM.dayActions.votes[socketId] !== undefined) return;
+
+    // Nếu đang revote, chỉ cho phép vote người trong danh sách hòa
+    if (autoGM.dayActions.isRevote && targetId !== 'skip' && !autoGM.dayActions.revoteTargets.includes(targetId)) return;
+
     autoGM.dayActions.votes[socketId] = targetId;
-    addGameLog('DAY_VOTE', { voter: player.name, target: targetId });
+    
+    // Ghi log (ẩn nếu skip)
+    if (targetId !== 'skip') {
+        addGameLog('DAY_VOTE', { voter: player.name, target: targetId });
+    } else {
+        addGameLog('DAY_VOTE', { voter: player.name, target: 'skip' });
+    }
+    
     broadcastState(io);
 
     // Kiểm tra tất cả người sống đã vote chưa

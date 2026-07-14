@@ -86,7 +86,7 @@ export const AutoAdminPanel = () => {
     };
     const handlePause = () => { socket.emit('autoGM:pause'); };
     const handleResume = () => { socket.emit('autoGM:resume'); };
-    const handleStop = () => { requestConfirm("Dừng game hoàn toàn?", () => socket.emit('autoGM:stop')); };
+    const handleStop = () => { requestConfirm("Hủy ván hiện tại và đưa mọi người về phòng chờ (Reset)?", () => socket.emit('autoGM:stop')); };
     const handleSkip = () => { requestConfirm("Tua qua bước hiện tại?", () => socket.emit('autoGM:skipPhase')); };
 
     const players = gameState.players.filter(p => !p.isAdmin);
@@ -184,7 +184,7 @@ export const AutoAdminPanel = () => {
                                 <Play size={13} />
                             </button>
                         )}
-                        <button onClick={handleStop} className="gothic-btn gothic-btn-danger text-[10px] py-1 px-2" title="Dừng game">
+                        <button onClick={handleStop} className="gothic-btn gothic-btn-danger text-[10px] py-1 px-2" title="Hủy ván / Reset">
                             <Square size={13} />
                         </button>
                     </div>
@@ -279,6 +279,12 @@ export const AutoAdminPanel = () => {
                                     disabled={readyCount !== totalCards || readyCount === 0}
                                     className="gothic-btn gothic-btn-primary text-[10px]">
                                     CHIA BÀI
+                                </button>
+                            )}
+                            {phase === 'GAME_OVER' && (
+                                <button onClick={handleStop}
+                                    className="gothic-btn gothic-btn-primary text-[10px] animate-mysticPulse">
+                                    TẠO VÁN MỚI
                                 </button>
                             )}
                             {isCardsDealt && (

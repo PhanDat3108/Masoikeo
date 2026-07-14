@@ -122,6 +122,8 @@ export const createAutoGMState = () => ({
         deathMessages: [],      // Mô tả cách chết: [{ playerId, cause }]
         votes: {},              // { voterId: targetId }
         executedPlayer: null,
+        isRevote: false,
+        revoteTargets: [],
     },
 
     // Metadata mở rộng cho mỗi người chơi
@@ -192,6 +194,8 @@ export const resetDayActions = () => {
         deathMessages: [],
         votes: {},
         executedPlayer: null,
+        isRevote: false,
+        revoteTargets: [],
     };
 };
 
