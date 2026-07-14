@@ -330,6 +330,10 @@ export const AutoAdminPanel = () => {
                                             )}
                                         </span>
                                     )}
+                                </div>
+                            </div>
+                        ))}
+                        
                         {players.length === 0 && (
                             <div className="py-12 text-center">
                                 <div className="text-white/10 text-3xl mb-3">☽</div>
