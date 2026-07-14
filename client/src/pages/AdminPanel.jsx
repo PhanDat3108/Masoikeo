@@ -31,6 +31,7 @@ export const AdminPanel = () => {
     const handleKick = (id) => { requestConfirm("Đuổi người chơi này khỏi phòng?", () => socket.emit('kickPlayer', id)); };
     const handleToggleLife = (id, isAlive) => { requestConfirm(isAlive ? "Giết người chơi này?" : "Hồi sinh người chơi này?", () => socket.emit('toggleLife', id)); };
     const handleTransformToWolf = (id) => { requestConfirm("Biến người chơi này thành Sói?", () => socket.emit('transformToWolf', id)); };
+    const handleToggleAutoGM = () => { socket.emit('toggleAutoGM'); };
 
     const updateRoleCount = (index, delta) => {
         const nc = [...configCopy];
@@ -120,9 +121,15 @@ export const AdminPanel = () => {
                         QUẢN TRÒ · VÁN #{matchCount}
                     </p>
                 </div>
-                <button onClick={handleLogout} className="gothic-btn flex items-center gap-2">
-                    <LogOut size={14} /> THOÁT
-                </button>
+                <div className="flex gap-2">
+                    <button onClick={handleToggleAutoGM} 
+                        className={`gothic-btn flex items-center gap-2 text-xs ${gameState.isAutoGM ? 'gothic-btn-primary !border-white/50' : ''}`}>
+                        {gameState.isAutoGM ? 'QUẢN TRÒ: TỰ ĐỘNG' : 'QUẢN TRÒ: THỦ CÔNG'}
+                    </button>
+                    <button onClick={handleLogout} className="gothic-btn flex items-center gap-2">
+                        <LogOut size={14} /> THOÁT
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 flex-1 min-h-0">

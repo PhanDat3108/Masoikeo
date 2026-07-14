@@ -75,6 +75,13 @@ export const registerHandlers = (io, socket) => {
         io.emit('startCountdown');
     });
 
+    socket.on('toggleAutoGM', () => {
+        if (checkAdmin(socket.id)) {
+            gameState.isAutoGM = !gameState.isAutoGM;
+            io.emit('updateState', gameState);
+        }
+    });
+
     socket.on('transformToWolf', (id) => {
         if (checkAdmin(socket.id)) {
             const p = gameState.players.find(player => player.id === id);
