@@ -3,7 +3,8 @@ import { socket } from '../socket.js';
 import { useGameStore } from '../store/useGameStore.js';
 import { PlayerCard } from '../components/PlayerCard.jsx';
 import { SkillPopup, SeerResultPopup } from '../components/SkillPopup.jsx';
-import { LogOut, Zap } from 'lucide-react';
+import { GameLogPopup } from './AutoAdminPanel.jsx';
+import { LogOut } from 'lucide-react';
 
 // Mô tả kỹ năng ngắn cho hiển thị trên card
 const ROLE_SHORT_DESC = {
@@ -28,9 +29,24 @@ export const AutoPlayerView = () => {
     const clearSkillResult = useGameStore(state => state.clearSkillResult);
 
     const [isFlipped, setIsFlipped] = useState(false);
-    const [showSkillPopup, setShowSkillPopup] = useState(false);
     const [showDayMessage, setShowDayMessage] = useState(false);
     const [confirmAction, setConfirmAction] = useState(null);
+    const [hasSeenLoverInfo, setHasSeenLoverInfo] = useState(false);
+    const [hideDeathOverlay, setHideDeathOverlay] = useState(false);
+    const [showGameLog, setShowGameLog] = useState(false);
+
+    // Reset states on new game
+    useEffect(() => {
+        if (phase === 'CARDS_DEALT' || phase === 'LOBBY') {
+            setHideDeathOverlay(false);
+            setShowGameLog(false);
+        }
+    }, [phase]);
+    useEffect(() => {
+        if (!autoGMState?.loverInfo) {
+            setHasSeenLoverInfo(false);
+        }
+    }, [autoGMState?.loverInfo]);
 
     const currentPlayer = gameState.players.find(p => p.id === socket.id);
     const hasRole = currentPlayer && currentPlayer.role !== '...';
@@ -158,6 +174,7 @@ export const AutoPlayerView = () => {
                         {phase === 'DAY_VOTE' && (
                             <span className="text-red-400/60 text-[10px] font-heading tracking-wider animate-mysticPulse">BỎ PHIẾU</span>
                         )}
+
                         {phase === 'DAY_ANNOUNCE' && (
                             <span className="text-white/40 text-[10px] font-heading tracking-wider">CÔNG BỐ</span>
                         )}
@@ -188,18 +205,53 @@ export const AutoPlayerView = () => {
             )}
 
             {/* Death overlay */}
-            {!currentPlayer.isAlive && (
-                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center"
+            {!currentPlayer.isAlive && !hideDeathOverlay && (
+                <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center p-4 animate-fadeIn"
                     style={{ background: 'rgba(0,0,0,0.92)' }}>
-                    <div className="text-white/10 text-6xl mb-4">☠</div>
-                    <h1 className="font-display text-3xl text-white/60 animate-mysticPulse"
+                    <div className="text-white/10 text-6xl mb-4 animate-pulse">☠</div>
+                    <h1 className="font-display text-3xl text-white/60 mb-2"
                         style={{ textShadow: '0 0 30px rgba(255,255,255,0.1)' }}>
                         BẠN ĐÃ CHẾT
                     </h1>
                     <div className="text-white/15 text-xs tracking-[0.4em] mt-3 font-heading">— ✦ —</div>
-                    <p className="text-white/20 text-xs mt-4" style={{ fontFamily: 'var(--font-body)' }}>
-                        Bạn chỉ có thể theo dõi diễn biến game.
+                    <p className="text-white/40 text-xs mt-4 mb-8 text-center" style={{ fontFamily: 'var(--font-body)' }}>
+                        Bạn đã bị loại khỏi ván chơi hiện tại.<br/>Bạn có thể tiếp tục theo dõi diễn biến hoặc thoát ra màn hình chờ.
                     </p>
+
+                    <button 
+                        onClick={() => setHideDeathOverlay(true)}
+                        className="gothic-btn w-full max-w-xs py-3 text-sm"
+                    >
+                        TIẾP TỤC THEO DÕI / CHỜ GAME MỚI
+                    </button>
+                </div>
+            )}
+
+            {/* Lover Info Popup */}
+            {autoGMState?.loverInfo && !hasSeenLoverInfo && currentPlayer.isAlive && (
+                <div className="absolute inset-0 z-[60] flex items-center justify-center p-4 animate-fadeIn" style={{ background: 'rgba(0,0,0,0.9)' }}>
+                    <div className="w-full max-w-sm p-6 flex flex-col items-center"
+                         style={{ background: '#110a0a', border: '1px solid #422', borderRadius: '2px', boxShadow: '0 0 40px rgba(255,100,100,0.1)' }}>
+                        <div className="text-4xl mb-4 animate-pulse">💕</div>
+                        <h3 className="font-display text-xl text-red-200/80 mb-2 tracking-widest text-center">BẠN ĐÃ ĐƯỢC GHÉP ĐÔI</h3>
+                        <p className="text-white/40 text-xs font-heading mb-6 text-center">Người yêu của bạn là:</p>
+                        
+                        <div className="text-center mb-8 w-full p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div className="text-xl font-display text-white/90 tracking-widest mb-2">
+                                {autoGMState.loverInfo.name}
+                            </div>
+                            <div className="text-xs font-heading text-red-300/60">
+                                Vai trò: {autoGMState.loverInfo.role}
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={() => setHasSeenLoverInfo(true)}
+                            className="gothic-btn w-full py-3 text-sm"
+                        >
+                            ĐÃ RÕ VÀ ẨN ĐI
+                        </button>
+                    </div>
                 </div>
             )}
 
@@ -216,17 +268,6 @@ export const AutoPlayerView = () => {
                         />
 
 
-
-                        {/* Thông tin người yêu */}
-                        {autoGMState?.loverInfo && (
-                            <div className="p-2 px-4 text-center" style={{ background: '#110a0a', border: '1px solid #311', borderRadius: '2px' }}>
-                                <p className="text-white/30 text-[10px] font-heading">💕 NGƯỜI YÊU</p>
-                                <p className="text-white/60 text-sm font-heading mt-0.5">
-                                    {autoGMState.loverInfo.name} · {autoGMState.loverInfo.role}
-                                </p>
-                            </div>
-                        )}
-
                         {/* Nút SỬ DỤNG KỸ NĂNG */}
                         {currentPlayer.isAlive && (
                             <button
@@ -236,7 +277,6 @@ export const AutoPlayerView = () => {
                                 }`}
                                 style={isMyTurn ? { boxShadow: '0 0 20px rgba(255,255,255,0.1)' } : {}}
                             >
-                                <Zap size={16} />
                                 {isMyTurn ? 'SỬ DỤNG KỸ NĂNG — ĐẾN LƯỢT BẠN!' : 'SỬ DỤNG KỸ NĂNG'}
                             </button>
                         )}
@@ -372,6 +412,11 @@ export const AutoPlayerView = () => {
             {/* Seer Result Popup */}
             {skillResult?.type === 'seer_result' && (
                 <SeerResultPopup result={skillResult} onClose={clearSkillResult} />
+            )}
+
+            {/* Game Log Popup */}
+            {showGameLog && phase === 'GAME_OVER' && (
+                <GameLogPopup logs={autoGMState?.gameLog || []} onClose={() => setShowGameLog(false)} />
             )}
 
             {/* Confirm Modal */}
