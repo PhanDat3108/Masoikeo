@@ -6,19 +6,24 @@ import { PlayerView } from './pages/PlayerView.jsx';
 import { AutoAdminPanel } from './pages/AutoAdminPanel.jsx';
 import { AutoPlayerView } from './pages/AutoPlayerView.jsx';
 import { ROLES_CONFIG, GAME_ASSETS, CUSTOM_ROLE_IMAGES } from './constants/roles.js';
+import { VOICE_FILES } from './constants/voiceLines.js';
 import { usePreloadImages } from './hooks/usePreloadImages.js';
 import { v4 as uuidv4 } from 'uuid';
 
 export const audioRefs = {
-    ticking: new Audio('/ticking.mp3'),
-    howl: new Audio('/wolf-howl.mp3'),
     flip: new Audio('/card-flip.mp3')
 };
-audioRefs.ticking.loop = true;
+
+// Khởi tạo các audio objects từ VOICE_FILES
+Object.entries(VOICE_FILES).forEach(([key, filename]) => {
+    audioRefs[key] = new Audio(`/${filename}`);
+    if (key === 'sfx_ticking') {
+        audioRefs[key].loop = true;
+    }
+});
 
 const unlockAudio = () => {
-    // Chỉ unlock ticking và flip, vì howl sẽ được phát trực tiếp
-    [audioRefs.ticking, audioRefs.flip].forEach(audio => {
+    Object.values(audioRefs).forEach(audio => {
         audio.volume = 0;
         const playPromise = audio.play();
         if (playPromise !== undefined) {
@@ -110,6 +115,36 @@ function App() {
                 setGameResult({ message: isWin ? 'CHIẾN THẮNG' : 'THẤT BẠI', teamName, isWin });
             }
         };
+
+        socket.on('autoGM:countdown', (time) => {
+            setCountdown(time);
+        });
+
+        socket.on('autoGM:playAudio', (voiceKey) => {
+            // Dừng mọi âm thanh voice khác trước khi phát
+            Object.keys(VOICE_FILES).forEach(key => {
+                // Không dừng sfx nếu đang phát
+                if (!key.startsWith('sfx_')) {
+                    const audio = audioRefs[key];
+                    if (audio) {
+                        audio.pause();
+                        audio.currentTime = 0;
+                    }
+                }
+            });
+
+            if (audioRefs[voiceKey]) {
+                audioRefs[voiceKey].volume = 1;
+                audioRefs[voiceKey].play().catch(() => {});
+            }
+        });
+
+        socket.on('autoGM:stopAudio', (voiceKey) => {
+            if (audioRefs[voiceKey]) {
+                audioRefs[voiceKey].pause();
+                audioRefs[voiceKey].currentTime = 0;
+            }
+        });
 
         const onStartCountdown = () => {
             setCountdown(5);

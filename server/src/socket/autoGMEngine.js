@@ -4,6 +4,7 @@
 // ================================================
 
 import { gameState, matchData } from '../state/gameState.js';
+import { VOICE_DURATIONS } from '../constants/voiceLines.js';
 import {
     autoGM, resetAutoGM, resetNightActions, resetDayActions,
     addGameLog, PHASES, TEAMS, ROLE_TEAM_MAP, ROLE_HAS_NIGHT_SKILL,
@@ -131,7 +132,7 @@ const getAlivePlayersByRole = (roleName) => {
 
 /** Kiểm tra có role nào thuộc loại này trong game không (kể cả đã chết) */
 const hasRoleInGame = (roleName) => {
-    return gameState.players.some(p => !p.isAdmin && p.role === roleName);
+    return Object.values(autoGM.playerMeta).some(meta => meta.originalRole === roleName);
 };
 
 /** Kiểm tra role có tồn tại VÀ còn sống không */
@@ -146,23 +147,34 @@ const hasAliveRole = (roleName) => {
 /** Đặt timer cho phase hiện tại, tự chuyển phase khi hết giờ */
 const setPhaseTimer = (io, durationSeconds, onTimeout) => {
     // Xóa timer cũ nếu có
-    if (autoGM.phaseTimer) {
-        clearTimeout(autoGM.phaseTimer);
-    }
+    clearPhaseTimer();
 
     autoGM.phaseEndTime = Date.now() + (durationSeconds * 1000);
     autoGM.phaseTimeoutCallback = onTimeout;
 
+    // Lên lịch nhắc 10s nếu thời gian đủ dài
+    if (durationSeconds >= 15) {
+        autoGM.warningTimer = setTimeout(() => {
+            if (!autoGM.isPaused && autoGM.phaseTimer) {
+                io.emit('autoGM:playAudio', '10s_warning');
+            }
+        }, (durationSeconds - 10) * 1000);
+    }
+
     autoGM.phaseTimer = setTimeout(() => {
         autoGM.phaseTimer = null;
         autoGM.phaseEndTime = null;
-        autoGM.phaseTimeoutCallback = null;
-
+        
         if (autoGM.isPaused) return; // Không xử lý nếu đang pause
 
         addGameLog('TIMEOUT', { phase: autoGM.phase, role: autoGM.currentTurnRole });
-        onTimeout();
+        if (autoGM.phaseTimeoutCallback) {
+            autoGM.phaseTimeoutCallback();
+        }
     }, durationSeconds * 1000);
+
+    // Cập nhật timer mới cho client
+    broadcastState(io);
 };
 
 /** Xóa timer hiện tại */
@@ -171,8 +183,25 @@ const clearPhaseTimer = () => {
         clearTimeout(autoGM.phaseTimer);
         autoGM.phaseTimer = null;
     }
+    if (autoGM.warningTimer) {
+        clearTimeout(autoGM.warningTimer);
+        autoGM.warningTimer = null;
+    }
     autoGM.phaseEndTime = null;
     autoGM.phaseTimeoutCallback = null;
+};
+
+/** Phát âm thanh, chờ cho đến khi đọc xong + 0.5s buffer mới gọi callback */
+const playVoiceAndWait = (io, voiceKey, callback) => {
+    const durationSec = VOICE_DURATIONS[voiceKey] || 0;
+    
+    // Gửi lệnh phát audio
+    io.emit('autoGM:playAudio', voiceKey);
+    
+    // Set timer chờ âm thanh
+    setPhaseTimer(io, durationSec + 0.5, () => {
+        callback();
+    });
 };
 
 // ================================================
@@ -218,11 +247,17 @@ export const startAutoGame = (io) => {
         players: players.map(p => ({ id: p.id, name: p.name, role: p.role })),
     });
 
-    autoGM.phase = PHASES.CARDS_DEALT;
-
-    broadcastState(io);
-    io.emit('updateMatchCount', matchData.count);
-    io.emit('startCountdown');
+    playVoiceAndWait(io, 'deal_cards_prepare', () => {
+        autoGM.phase = PHASES.CARDS_DEALT;
+        broadcastState(io);
+        io.emit('updateMatchCount', matchData.count);
+        io.emit('startCountdown');
+        
+        // Sau khi chia bài xong (khoảng 1.5s), phát giọng "Xem bài đi"
+        setTimeout(() => {
+            io.emit('autoGM:playAudio', 'check_cards');
+        }, 1500);
+    });
 };
 
 // ================================================
@@ -247,31 +282,31 @@ const startNight = (io) => {
     resetNightActions();
     autoGM.phase = PHASES.NIGHT;
 
-    // Phát âm thanh sói hú cho client
     io.emit('autoGM:phaseTransition', { from: 'DAY', to: 'NIGHT' });
 
-    // Xác định bước tiếp theo
-    advanceNightPhase(io);
+    playVoiceAndWait(io, 'night_start', () => {
+        io.emit('autoGM:playAudio', 'sfx_wolf_howl');
+        // Xác định bước tiếp theo
+        advanceNightPhase(io);
+    });
 };
 
 /** Chuyển sang bước tiếp theo trong ban đêm */
 const advanceNightPhase = (io) => {
-    // Đêm đầu tiên → Cupid đi trước (nếu có)
-    if (autoGM.nightCount === 1 && autoGM.phase === PHASES.NIGHT && hasAliveRole('Cupid')) {
-        autoGM.phase = PHASES.NIGHT_CUPID;
-        autoGM.currentTurnRole = 'Cupid';
-        addGameLog('SKILL_TURN', { role: 'Cupid' });
-        setPhaseTimer(io, autoGM.settings.skillDuration, () => {
-            // Hết giờ → bỏ lượt (không ghép đôi)
-            addGameLog('SKILL_SKIP', { role: 'Cupid', reason: 'timeout' });
-            afterCupid(io);
-        });
-        broadcastState(io);
+    // Đêm đầu tiên → Cupid đi trước (nếu có trong game)
+    if (autoGM.nightCount === 1 && autoGM.phase === PHASES.NIGHT) {
+        startCupidPhase(io);
         return;
     }
 
-    // Cupid đã xong hoặc không có → Sói
+    // Cupid đã xong hoặc không có (hoặc là các đêm sau) → Cặp đôi thức dậy
     if (autoGM.phase === PHASES.NIGHT || autoGM.phase === PHASES.NIGHT_CUPID) {
+        startCouplePhase(io);
+        return;
+    }
+
+    // Couple xong → Sói
+    if (autoGM.phase === PHASES.NIGHT_COUPLE) {
         startWolfPhase(io);
         return;
     }
@@ -322,21 +357,124 @@ const advanceNightPhase = (io) => {
     }
 };
 
+// ---- Cupid ----
+const startCupidPhase = (io) => {
+    if (!hasRoleInGame('Cupid')) {
+        autoGM.phase = PHASES.NIGHT_CUPID;
+        advanceNightPhase(io);
+        return;
+    }
+
+    autoGM.phase = PHASES.NIGHT_CUPID;
+    autoGM.currentTurnRole = 'Cupid';
+    addGameLog('SKILL_TURN', { role: 'Cupid' });
+
+    playVoiceAndWait(io, 'cupid_start', () => {
+        if (hasAliveRole('Cupid')) {
+            setPhaseTimer(io, autoGM.settings.skillDuration, () => {
+                addGameLog('SKILL_SKIP', { role: 'Cupid', reason: 'timeout' });
+                afterCupid(io);
+            });
+        } else {
+            // Fake turn
+            const fakeDuration = Math.floor(Math.random() * 6) + 10;
+            setPhaseTimer(io, fakeDuration, () => {
+                afterCupid(io);
+            });
+        }
+    });
+    broadcastState(io);
+};
+
+const afterCupid = (io) => {
+    autoGM.currentTurnRole = null;
+    broadcastState(io);
+    
+    playVoiceAndWait(io, 'cupid_check', () => {
+        setPhaseTimer(io, 6, () => { // 6 giây cho cả làng xem điện thoại
+            playVoiceAndWait(io, 'night_start', () => {
+                advanceNightPhase(io);
+            });
+        });
+    });
+};
+
+// ---- Couple ----
+const startCouplePhase = (io) => {
+    // Chỉ chạy nếu trong game có Cupid (nếu không có Cupid thì không bao giờ có couple)
+    if (!hasRoleInGame('Cupid')) {
+        autoGM.phase = PHASES.NIGHT_COUPLE;
+        advanceNightPhase(io);
+        return;
+    }
+
+    autoGM.phase = PHASES.NIGHT_COUPLE;
+    // Để currentTurnRole là chuỗi rỗng để không trigger popup skill nhưng vẫn broadcast
+    autoGM.currentTurnRole = ''; 
+
+    playVoiceAndWait(io, 'couple_wake', () => {
+        // Kiểm tra xem couple có còn sống không
+        let isCoupleAlive = false;
+        if (autoGM.couple.length === 2) {
+            const p1 = gameState.players.find(p => p.id === autoGM.couple[0]);
+            const p2 = gameState.players.find(p => p.id === autoGM.couple[1]);
+            if (p1?.isAlive && p2?.isAlive) {
+                isCoupleAlive = true;
+            }
+        }
+
+        if (isCoupleAlive) {
+            // Cặp đôi còn sống -> 15s để trao đổi
+            setPhaseTimer(io, 15, () => {
+                afterCouple(io);
+            });
+        } else {
+            // Fake turn cho cặp đôi nếu 1 trong 2 đã chết hoặc Cupid không ghép đôi
+            const fakeDuration = Math.floor(Math.random() * 6) + 10;
+            setPhaseTimer(io, fakeDuration, () => {
+                afterCouple(io);
+            });
+        }
+    });
+    broadcastState(io);
+};
+
+const afterCouple = (io) => {
+    autoGM.currentTurnRole = null;
+    broadcastState(io);
+    playVoiceAndWait(io, 'night_start', () => {
+        advanceNightPhase(io);
+    });
+};
+
 // ---- Sói ----
 const startWolfPhase = (io) => {
-    if (!hasAliveRole('Sói') && getAliveWolves().length === 0) {
-        // Không có sói → skip (edge case)
+    if (!hasRoleInGame('Sói')) {
         autoGM.phase = PHASES.NIGHT_WOLF;
         afterWolf(io);
         return;
     }
+    
     autoGM.phase = PHASES.NIGHT_WOLF;
     autoGM.currentTurnRole = 'Sói';
     autoGM.nightActions.wolfVotes = {};
     autoGM.nightActions.wolfVoteRound = 1;
     addGameLog('SKILL_TURN', { role: 'Sói' });
-    setPhaseTimer(io, autoGM.settings.skillDuration, () => {
-        resolveWolfVote(io);
+    
+    playVoiceAndWait(io, 'wolf_wake', () => {
+        playVoiceAndWait(io, 'wolf_choose', () => {
+            if (getAliveWolves().length > 0 || hasAliveRole('Sói')) {
+                setPhaseTimer(io, autoGM.settings.skillDuration, () => {
+                    resolveWolfVote(io);
+                });
+            } else {
+                // Fake turn
+                const fakeDuration = Math.floor(Math.random() * 6) + 10;
+                setPhaseTimer(io, fakeDuration, () => {
+                    afterWolf(io);
+                });
+            }
+        });
     });
     broadcastState(io);
 };
@@ -403,17 +541,29 @@ const afterWolf = (io) => {
 
 // ---- Tiên tri ----
 const startSeerPhase = (io) => {
-    if (!hasAliveRole('Tiên tri')) {
+    if (!hasRoleInGame('Tiên tri')) {
         autoGM.phase = PHASES.NIGHT_SEER;
         advanceNightPhase(io);
         return;
     }
+    
     autoGM.phase = PHASES.NIGHT_SEER;
     autoGM.currentTurnRole = 'Tiên tri';
     addGameLog('SKILL_TURN', { role: 'Tiên tri' });
-    setPhaseTimer(io, autoGM.settings.skillDuration, () => {
-        addGameLog('SKILL_SKIP', { role: 'Tiên tri', reason: 'timeout' });
-        afterSeer(io);
+    
+    playVoiceAndWait(io, 'seer_wake', () => {
+        if (hasAliveRole('Tiên tri')) {
+            setPhaseTimer(io, autoGM.settings.skillDuration, () => {
+                addGameLog('SKILL_SKIP', { role: 'Tiên tri', reason: 'timeout' });
+                afterSeer(io);
+            });
+        } else {
+            // Fake turn
+            const fakeDuration = Math.floor(Math.random() * 6) + 10;
+            setPhaseTimer(io, fakeDuration, () => {
+                afterSeer(io);
+            });
+        }
     });
     broadcastState(io);
 };
@@ -426,17 +576,29 @@ const afterSeer = (io) => {
 
 // ---- Bảo vệ ----
 const startGuardPhase = (io) => {
-    if (!hasAliveRole('Bảo vệ')) {
+    if (!hasRoleInGame('Bảo vệ')) {
         autoGM.phase = PHASES.NIGHT_GUARD;
         advanceNightPhase(io);
         return;
     }
+    
     autoGM.phase = PHASES.NIGHT_GUARD;
     autoGM.currentTurnRole = 'Bảo vệ';
     addGameLog('SKILL_TURN', { role: 'Bảo vệ' });
-    setPhaseTimer(io, autoGM.settings.skillDuration, () => {
-        addGameLog('SKILL_SKIP', { role: 'Bảo vệ', reason: 'timeout' });
-        afterGuard(io);
+    
+    playVoiceAndWait(io, 'guard_wake', () => {
+        if (hasAliveRole('Bảo vệ')) {
+            setPhaseTimer(io, autoGM.settings.skillDuration, () => {
+                addGameLog('SKILL_SKIP', { role: 'Bảo vệ', reason: 'timeout' });
+                afterGuard(io);
+            });
+        } else {
+            // Fake turn
+            const fakeDuration = Math.floor(Math.random() * 6) + 10;
+            setPhaseTimer(io, fakeDuration, () => {
+                afterGuard(io);
+            });
+        }
     });
     broadcastState(io);
 };
@@ -479,18 +641,8 @@ const resolveWolfBite = (io) => {
 
 // ---- Phù thủy ----
 const startWitchPhase = (io) => {
-    if (!hasAliveRole('Phù Thuỷ')) {
+    if (!hasRoleInGame('Phù Thuỷ')) {
         autoGM.phase = PHASES.NIGHT_WITCH;
-        advanceNightPhase(io);
-        return;
-    }
-
-    const witch = getAlivePlayersByRole('Phù Thuỷ')[0];
-    // Kiểm tra phù thủy còn thuốc không
-    if (autoGM.nightActions.witchHealUsed && autoGM.nightActions.witchKillUsed) {
-        // Hết cả 2 bình → bỏ lượt tự động
-        autoGM.phase = PHASES.NIGHT_WITCH;
-        addGameLog('SKILL_SKIP', { role: 'Phù Thuỷ', reason: 'no_potions' });
         advanceNightPhase(io);
         return;
     }
@@ -498,9 +650,31 @@ const startWitchPhase = (io) => {
     autoGM.phase = PHASES.NIGHT_WITCH;
     autoGM.currentTurnRole = 'Phù Thuỷ';
     addGameLog('SKILL_TURN', { role: 'Phù Thuỷ' });
-    setPhaseTimer(io, autoGM.settings.skillDuration, () => {
-        addGameLog('SKILL_SKIP', { role: 'Phù Thuỷ', reason: 'timeout' });
-        afterWitch(io);
+
+    playVoiceAndWait(io, 'witch_wake', () => {
+        playVoiceAndWait(io, 'witch_skill', () => {
+            if (hasAliveRole('Phù Thuỷ')) {
+                // Kiểm tra phù thủy còn thuốc không
+                if (autoGM.nightActions.witchHealUsed && autoGM.nightActions.witchKillUsed) {
+                    const fakeDuration = Math.floor(Math.random() * 6) + 5;
+                    setPhaseTimer(io, fakeDuration, () => {
+                        addGameLog('SKILL_SKIP', { role: 'Phù Thuỷ', reason: 'no_potions' });
+                        afterWitch(io);
+                    });
+                } else {
+                    setPhaseTimer(io, autoGM.settings.skillDuration, () => {
+                        addGameLog('SKILL_SKIP', { role: 'Phù Thuỷ', reason: 'timeout' });
+                        afterWitch(io);
+                    });
+                }
+            } else {
+                // Fake turn
+                const fakeDuration = Math.floor(Math.random() * 6) + 10;
+                setPhaseTimer(io, fakeDuration, () => {
+                    afterWitch(io);
+                });
+            }
+        });
     });
     broadcastState(io);
 };
@@ -782,14 +956,26 @@ const startDay = (io) => {
     autoGM.phase = PHASES.DAY_ANNOUNCE;
     autoGM.currentTurnRole = null;
 
-    // Phát âm thanh gà gáy
     io.emit('autoGM:phaseTransition', { from: 'NIGHT', to: 'DAY' });
-
     addGameLog('PHASE_CHANGE', { to: 'DAY', dayCount: autoGM.dayCount });
+    
+    // Gà gáy
+    io.emit('autoGM:playAudio', 'sfx_rooster');
 
-    // Công bố người chết (hiện popup đếm ngược 5s + 7s đọc tên)
-    setPhaseTimer(io, 12, () => {
-        startDiscussion(io);
+    playVoiceAndWait(io, 'day_start', () => {
+        // Đợi 5s cho popup đếm ngược ở client
+        setPhaseTimer(io, 5, () => {
+            const deathCount = autoGM.dayActions.deathMessages.length;
+            let voiceKey = `${deathCount}_dead`;
+            if (deathCount > 5) voiceKey = '5_dead'; // Tối đa voice 5 chết
+            
+            playVoiceAndWait(io, voiceKey, () => {
+                // Đợi thêm vài giây cho người chơi đọc tên người chết
+                setPhaseTimer(io, 3, () => {
+                    startDiscussion(io);
+                });
+            });
+        });
     });
     broadcastState(io);
 };
@@ -798,8 +984,10 @@ const startDiscussion = (io) => {
     autoGM.phase = PHASES.DAY_DISCUSS;
     addGameLog('PHASE_CHANGE', { to: 'DAY_DISCUSS' });
 
-    setPhaseTimer(io, autoGM.settings.discussDuration, () => {
-        startDayVote(io);
+    playVoiceAndWait(io, 'discussion_start', () => {
+        setPhaseTimer(io, autoGM.settings.discussDuration, () => {
+            startDayVote(io);
+        });
     });
     broadcastState(io);
 };
@@ -810,14 +998,22 @@ const startDayVote = (io) => {
 
     if (autoGM.dayActions.isRevote) {
         addGameLog('PHASE_CHANGE', { to: 'DAY_REVOTE' });
-        // Re-vote chỉ 15 giây
-        setPhaseTimer(io, 15, () => {
-            resolveDayVote(io);
+        
+        playVoiceAndWait(io, 'vote_tie_revote', () => {
+            // Re-vote chỉ 15 giây
+            setPhaseTimer(io, 15, () => {
+                resolveDayVote(io);
+            });
         });
     } else {
         addGameLog('PHASE_CHANGE', { to: 'DAY_VOTE' });
-        setPhaseTimer(io, autoGM.settings.voteDuration, () => {
-            resolveDayVote(io);
+        
+        playVoiceAndWait(io, 'discussion_end', () => {
+            playVoiceAndWait(io, 'vote_start', () => {
+                setPhaseTimer(io, autoGM.settings.voteDuration, () => {
+                    resolveDayVote(io);
+                });
+            });
         });
     }
     broadcastState(io);
@@ -858,7 +1054,7 @@ export const resolveDayVote = (io) => {
         // LẦN 1
         if (topTargets.length === 1 && maxVotes >= Math.ceil(aliveCount / 2)) {
             // Treo cổ thành công (đủ 50%)
-            executePlayer(io, topTargets[0], maxVotes);
+            if (executePlayer(io, topTargets[0], maxVotes)) return;
         } else if (topTargets.length >= 2 && maxVotes >= Math.ceil(aliveCount * 0.3)) {
             // Hòa phiếu và đủ 30% -> Bỏ phiếu lại
             addGameLog('VOTE_TIE', { tied: topTargets, votes: maxVotes, action: 'revote' });
@@ -874,7 +1070,7 @@ export const resolveDayVote = (io) => {
         // LẦN 2 (Re-vote)
         if (topTargets.length === 1 && maxVotes >= Math.ceil(aliveCount / 2)) {
             // Ai cao phiếu hơn và đủ 50% thì chết
-            executePlayer(io, topTargets[0], maxVotes);
+            if (executePlayer(io, topTargets[0], maxVotes)) return;
         } else {
             // Hòa tiếp hoặc không đủ 50% -> Không ai chết
             addGameLog('VOTE_TIE_FINAL', { tied: topTargets, votes: maxVotes });
@@ -904,7 +1100,7 @@ const executePlayer = (io, targetId, maxVotes) => {
     if (targetMeta?.originalRole === 'Sida') {
         addGameLog('SIDA_HANGED', { player: target?.name });
         endGame(io, { winner: TEAMS.SIDA, reason: 'Sida bị dân làng treo cổ!' });
-        return;
+        return true;
     }
 
     // Treo cổ
@@ -913,6 +1109,7 @@ const executePlayer = (io, targetId, maxVotes) => {
         autoGM.dayActions.executedPlayer = targetId;
         addGameLog('HANGED', { player: target.name, playerId: targetId, votes: maxVotes });
     }
+    return false;
 };
 
 const afterDayExecution = (io) => {
@@ -925,11 +1122,14 @@ const afterDayExecution = (io) => {
             autoGM.phase = PHASES.DAY_HUNTER_CHECK;
             autoGM.currentTurnRole = 'Thợ săn';
             addGameLog('HUNTER_TRIGGER', { trigger: 'hanged' });
-            setPhaseTimer(io, autoGM.settings.skillDuration, () => {
-                // Hết giờ → không bắn
-                addGameLog('SKILL_SKIP', { role: 'Thợ săn', reason: 'timeout' });
-                autoGM.currentTurnRole = null;
-                checkDayCouple(io);
+            
+            playVoiceAndWait(io, 'hunter_wake', () => {
+                setPhaseTimer(io, autoGM.settings.skillDuration, () => {
+                    // Hết giờ → không bắn
+                    addGameLog('SKILL_SKIP', { role: 'Thợ săn', reason: 'timeout' });
+                    autoGM.currentTurnRole = null;
+                    checkDayCouple(io);
+                });
             });
             broadcastState(io);
             return;
@@ -984,11 +1184,6 @@ export const handleCupidAction = (io, targets) => {
     });
 
     afterCupid(io);
-};
-
-const afterCupid = (io) => {
-    autoGM.currentTurnRole = null;
-    advanceNightPhase(io);
 };
 
 // ================================================
@@ -1255,9 +1450,23 @@ const endGame = (io, result) => {
     });
 
     io.emit('updateLeaderboard', matchData.leaderboard);
-    io.emit('gameEnded', { team: result.winner, winners });
+    
+    const finishGame = () => {
+        io.emit('gameEnded', { team: result.winner, winners });
+        broadcastState(io);
+    };
 
-    broadcastState(io);
+    if (result.winner === TEAMS.SIDA) {
+        playVoiceAndWait(io, 'win_sida', finishGame);
+    } else {
+        playVoiceAndWait(io, 'win_announce', () => {
+            let voiceKey = 'win_villager';
+            if (result.winner === TEAMS.WOLF) voiceKey = 'win_wolf';
+            else if (result.winner === TEAMS.COUPLE) voiceKey = 'win_couple';
+
+            playVoiceAndWait(io, voiceKey, finishGame);
+        });
+    }
 };
 
 // ================================================

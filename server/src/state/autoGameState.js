@@ -12,6 +12,7 @@ export const PHASES = {
     // Ban đêm
     NIGHT: 'NIGHT',
     NIGHT_CUPID: 'NIGHT_CUPID',
+    NIGHT_COUPLE: 'NIGHT_COUPLE',
     NIGHT_WOLF: 'NIGHT_WOLF',
     NIGHT_SEER: 'NIGHT_SEER',
     NIGHT_GUARD: 'NIGHT_GUARD',

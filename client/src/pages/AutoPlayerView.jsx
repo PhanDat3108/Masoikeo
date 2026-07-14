@@ -161,8 +161,10 @@ export const AutoPlayerView = () => {
                         {phase === 'DAY_ANNOUNCE' && (
                             <span className="text-white/40 text-[10px] font-heading tracking-wider">CÔNG BỐ</span>
                         )}
-                        {timeLeftStr && (
+                        {timeLeftStr ? (
                             <span className="font-heading text-sm text-white/50">{timeLeftStr}</span>
+                        ) : (
+                            <span className="font-heading text-[10px] text-white/30 tracking-widest animate-pulse">ĐANG ĐỢI...</span>
                         )}
                     </div>
 

@@ -10,6 +10,7 @@ const PHASE_LABELS = {
     CARDS_DEALT: 'ĐÃ CHIA BÀI',
     NIGHT: 'BAN ĐÊM',
     NIGHT_CUPID: '🏹 CUPID ĐANG GHÉP ĐÔI',
+    NIGHT_COUPLE: '💕 CẶP ĐÔI THỨC DẬY',
     NIGHT_WOLF: '🐺 SÓI ĐANG CẮN',
     NIGHT_SEER: '🔮 TIÊN TRI ĐANG SOI',
     NIGHT_GUARD: '🛡️ BẢO VỆ ĐANG BẢO VỆ',
@@ -163,10 +164,12 @@ export const AutoAdminPanel = () => {
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
-                        {timeLeftStr && (
+                        {timeLeftStr ? (
                             <span className="font-heading text-lg text-white/70 animate-mysticPulse drop-shadow-md">
                                 {timeLeftStr}
                             </span>
+                        ) : (
+                            <span className="font-heading text-xs text-white/40 tracking-widest animate-pulse mt-1">ĐANG ĐỢI...</span>
                         )}
                         {autoGMState?.isPaused && (
                             <span className="text-yellow-400/70 text-xs font-heading animate-mysticPulse">TẠM DỪNG</span>
