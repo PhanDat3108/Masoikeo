@@ -42,5 +42,6 @@ export const VOICE_FILES = {
     "win_sida": "sidawin_1.m4a",
     
     "sfx_wolf_howl": "wolf-howl.mp3",
-    "sfx_ticking": "ticking.mp3"
+    "sfx_ticking": "ticking.mp3",
+    "sfx_rooster": "rooster.mp3"
 };

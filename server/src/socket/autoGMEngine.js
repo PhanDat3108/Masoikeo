@@ -963,8 +963,14 @@ const startDay = (io) => {
     io.emit('autoGM:playAudio', 'sfx_rooster');
 
     playVoiceAndWait(io, 'day_start', () => {
+        // Bật âm thanh đếm ngược
+        io.emit('autoGM:playAudio', 'sfx_ticking');
+
         // Đợi 5s cho popup đếm ngược ở client
         setPhaseTimer(io, 5, () => {
+            // Tắt âm thanh đếm ngược
+            io.emit('autoGM:stopAudio', 'sfx_ticking');
+
             const deathCount = autoGM.dayActions.deathMessages.length;
             let voiceKey = `${deathCount}_dead`;
             if (deathCount > 5) voiceKey = '5_dead'; // Tối đa voice 5 chết

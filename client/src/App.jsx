@@ -68,6 +68,25 @@ function App() {
     ];
     const imagesLoaded = usePreloadImages(allImages);
 
+    // Mở khóa âm thanh ở lần tương tác (click/chạm) đầu tiên của người dùng
+    useEffect(() => {
+        const handleFirstInteraction = () => {
+            if (!window.__audioUnlocked) {
+                unlockAudio();
+                window.__audioUnlocked = true;
+                document.removeEventListener('click', handleFirstInteraction);
+                document.removeEventListener('touchstart', handleFirstInteraction);
+            }
+        };
+        document.addEventListener('click', handleFirstInteraction);
+        document.addEventListener('touchstart', handleFirstInteraction);
+        
+        return () => {
+            document.removeEventListener('click', handleFirstInteraction);
+            document.removeEventListener('touchstart', handleFirstInteraction);
+        };
+    }, []);
+
     useEffect(() => {
         const onUpdateState = (state) => {
             setGameState(state);
@@ -150,8 +169,10 @@ function App() {
             setCountdown(5);
             let timeLeft = 5;
 
-            audioRefs.ticking.volume = 1;
-            audioRefs.ticking.play().catch(e => console.log('Audio error:', e));
+            if (audioRefs['sfx_ticking']) {
+                audioRefs['sfx_ticking'].volume = 1;
+                audioRefs['sfx_ticking'].play().catch(e => console.log('Audio error:', e));
+            }
 
             const timer = setInterval(() => {
                 timeLeft--;
@@ -159,11 +180,15 @@ function App() {
                     clearInterval(timer);
                     setCountdown(null);
                     
-                    audioRefs.ticking.pause();
-                    audioRefs.ticking.currentTime = 0;
+                    if (audioRefs['sfx_ticking']) {
+                        audioRefs['sfx_ticking'].pause();
+                        audioRefs['sfx_ticking'].currentTime = 0;
+                    }
 
-                    audioRefs.howl.volume = 1;
-                    audioRefs.howl.play().catch(e => console.log('Audio error:', e));
+                    if (audioRefs['sfx_wolf_howl']) {
+                        audioRefs['sfx_wolf_howl'].volume = 1;
+                        audioRefs['sfx_wolf_howl'].play().catch(e => console.log('Audio error:', e));
+                    }
                 } else {
                     setCountdown(timeLeft);
                 }
@@ -171,8 +196,10 @@ function App() {
         };
 
         const onPlayWolfHowl = () => {
-            audioRefs.howl.volume = 1;
-            audioRefs.howl.play().catch(e => console.log('Audio error:', e));
+            if (audioRefs['sfx_wolf_howl']) {
+                audioRefs['sfx_wolf_howl'].volume = 1;
+                audioRefs['sfx_wolf_howl'].play().catch(e => console.log('Audio error:', e));
+            }
         };
 
         const onConnect = () => {
@@ -257,9 +284,11 @@ function App() {
         setSession(inputName, newSecret, isAdm);
 
         // Phát tiếng sói hú khi người chơi click tham gia
-        audioRefs.howl.volume = 1;
-        audioRefs.howl.currentTime = 0;
-        audioRefs.howl.play().catch(() => {});
+        if (audioRefs['sfx_wolf_howl']) {
+            audioRefs['sfx_wolf_howl'].volume = 1;
+            audioRefs['sfx_wolf_howl'].currentTime = 0;
+            audioRefs['sfx_wolf_howl'].play().catch(() => {});
+        }
     };
 
     if (!imagesLoaded) {
