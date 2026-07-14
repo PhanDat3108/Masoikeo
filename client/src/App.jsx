@@ -3,6 +3,8 @@ import { socket } from './socket.js';
 import { useGameStore } from './store/useGameStore.js';
 import { AdminPanel } from './pages/AdminPanel.jsx';
 import { PlayerView } from './pages/PlayerView.jsx';
+import { AutoAdminPanel } from './pages/AutoAdminPanel.jsx';
+import { AutoPlayerView } from './pages/AutoPlayerView.jsx';
 import { ROLES_CONFIG, GAME_ASSETS, CUSTOM_ROLE_IMAGES } from './constants/roles.js';
 import { usePreloadImages } from './hooks/usePreloadImages.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -42,6 +44,10 @@ function App() {
     const setLeaderboard = useGameStore(state => state.setLeaderboard);
     const setKicked = useGameStore(state => state.setKicked);
     const setCountdown = useGameStore(state => state.setCountdown);
+    const setAutoGMState = useGameStore(state => state.setAutoGMState);
+    const setSkillResult = useGameStore(state => state.setSkillResult);
+    const setSkillError = useGameStore(state => state.setSkillError);
+    const setPhaseTransition = useGameStore(state => state.setPhaseTransition);
 
     const [inputName, setInputName] = useState('');
     const [gameResult, setGameResult] = useState(null);
@@ -143,6 +149,22 @@ function App() {
             }
         };
 
+        // Auto GM events
+        const onAutoGMState = (state) => setAutoGMState(state);
+        const onAutoGMSkillResult = (result) => setSkillResult(result);
+        const onAutoGMSkillError = (error) => setSkillError(error);
+        const onAutoGMPhaseTransition = (transition) => {
+            setPhaseTransition(transition);
+            // Phát âm thanh khi chuyển phase
+            if (transition.to === 'NIGHT') {
+                audioRefs.howl.volume = 1;
+                audioRefs.howl.play().catch(() => {});
+            } else if (transition.to === 'DAY') {
+                // TODO: Thêm âm thanh gà gáy khi có file
+                // Tạm thời dùng sound khác hoặc bỏ qua
+            }
+        };
+
         socket.on('connect', onConnect);
         socket.on('updateState', onUpdateState);
         socket.on('updateMatchCount', onUpdateMatchCount);
@@ -152,6 +174,10 @@ function App() {
         socket.on('gameEnded', onGameEnded);
         socket.on('startCountdown', onStartCountdown);
         socket.on('playWolfHowl', onPlayWolfHowl);
+        socket.on('autoGM:stateUpdate', onAutoGMState);
+        socket.on('autoGM:skillResult', onAutoGMSkillResult);
+        socket.on('autoGM:skillError', onAutoGMSkillError);
+        socket.on('autoGM:phaseTransition', onAutoGMPhaseTransition);
 
         if (!socket.connected) {
             socket.connect();
@@ -169,6 +195,10 @@ function App() {
             socket.off('gameEnded', onGameEnded);
             socket.off('startCountdown', onStartCountdown);
             socket.off('playWolfHowl', onPlayWolfHowl);
+            socket.off('autoGM:stateUpdate', onAutoGMState);
+            socket.off('autoGM:skillResult', onAutoGMSkillResult);
+            socket.off('autoGM:skillError', onAutoGMSkillError);
+            socket.off('autoGM:phaseTransition', onAutoGMPhaseTransition);
         };
     }, []);
 
@@ -302,7 +332,9 @@ function App() {
                         </div>
                     </div>
                 ) : (
-                    isAdmin ? <AdminPanel /> : <PlayerView />
+                    isAdmin
+                        ? (gameState.isAutoGM ? <AutoAdminPanel /> : <AdminPanel />)
+                        : (gameState.isAutoGM ? <AutoPlayerView /> : <PlayerView />)
                 )}
             </div>
         </div>

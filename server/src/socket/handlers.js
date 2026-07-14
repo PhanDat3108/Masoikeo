@@ -1,5 +1,11 @@
 import { gameState, matchData } from '../state/gameState.js';
 import { shuffleAndDistributeCards, checkAdmin } from './gameLogic.js';
+import {
+    startAutoGame, beginGame, handleSkillSubmit, handleDayVote,
+    handleHunterAim, handleHunterShot, pauseGame, resumeGame,
+    updateSettings, stopAutoGame, skipPhase, getAutoGMStateForClient,
+} from './autoGMEngine.js';
+import { autoGM } from '../state/autoGameState.js';
 
 let timerTimeout = null;
 
@@ -8,6 +14,11 @@ export const registerHandlers = (io, socket) => {
     socket.emit('updateRolesConfig', gameState.rolesConfig);
     socket.emit('updateMatchCount', matchData.count);
     socket.emit('updateLeaderboard', matchData.leaderboard);
+
+    // Gửi autoGM state nếu đang trong chế độ Auto GM
+    if (gameState.isAutoGM) {
+        socket.emit('autoGM:stateUpdate', getAutoGMStateForClient(socket.id));
+    }
 
     // Xử lý Join & Reconnect
     socket.on('join', (data) => {
@@ -224,6 +235,87 @@ export const registerHandlers = (io, socket) => {
     socket.on('leaveRoom', () => {
         gameState.players = gameState.players.filter(p => p.id !== socket.id);
         io.emit('updateState', gameState);
+    });
+
+    // ================================================
+    // AUTO GM EVENTS
+    // ================================================
+
+    // Admin: Cập nhật settings thời gian
+    socket.on('autoGM:updateSettings', (newSettings) => {
+        if (checkAdmin(socket.id) && gameState.isAutoGM) {
+            updateSettings(io, newSettings);
+        }
+    });
+
+    // Admin: Bắt đầu game tự động (chia bài)
+    socket.on('autoGM:startGame', () => {
+        if (checkAdmin(socket.id) && gameState.isAutoGM) {
+            startAutoGame(io);
+        }
+    });
+
+    // Admin: Bắt đầu chơi (sau khi mọi người đã xem bài)
+    socket.on('autoGM:beginGame', () => {
+        if (checkAdmin(socket.id) && gameState.isAutoGM) {
+            beginGame(io);
+        }
+    });
+
+    // Player: Gửi kỹ năng
+    socket.on('autoGM:submitSkill', (action) => {
+        if (gameState.isAutoGM) {
+            handleSkillSubmit(io, socket.id, action);
+        }
+    });
+
+    // Player: Thợ săn nhắm mục tiêu
+    socket.on('autoGM:hunterAim', (targetId) => {
+        if (gameState.isAutoGM) {
+            handleHunterAim(io, socket.id, targetId);
+        }
+    });
+
+    // Player: Thợ săn bắn (khi bị treo ban ngày)
+    socket.on('autoGM:hunterShot', (targetId) => {
+        if (gameState.isAutoGM) {
+            handleHunterShot(io, socket.id, targetId);
+        }
+    });
+
+    // Player: Vote ban ngày
+    socket.on('autoGM:dayVote', (targetId) => {
+        if (gameState.isAutoGM) {
+            handleDayVote(io, socket.id, targetId);
+        }
+    });
+
+    // Admin: Tạm dừng
+    socket.on('autoGM:pause', () => {
+        if (checkAdmin(socket.id) && gameState.isAutoGM) {
+            pauseGame(io);
+        }
+    });
+
+    // Admin: Tiếp tục
+    socket.on('autoGM:resume', () => {
+        if (checkAdmin(socket.id) && gameState.isAutoGM) {
+            resumeGame(io);
+        }
+    });
+
+    // Admin: Dừng game
+    socket.on('autoGM:stop', () => {
+        if (checkAdmin(socket.id) && gameState.isAutoGM) {
+            stopAutoGame(io);
+        }
+    });
+
+    // Admin: Tua bước
+    socket.on('autoGM:skipPhase', () => {
+        if (checkAdmin(socket.id) && gameState.isAutoGM) {
+            skipPhase(io);
+        }
     });
 
     // Disconnect: We don't remove player on disconnect immediately so they can F5.

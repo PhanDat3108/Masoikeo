@@ -12,6 +12,12 @@ export const useGameStore = create((set) => ({
     leaderboard: {},
     isKicked: false,
     countdown: null,
+
+    // Auto GM State from Server
+    autoGMState: null,      // Trạng thái Auto GM (phase, settings, etc.)
+    skillResult: null,      // Kết quả kỹ năng (VD: Tiên tri soi → phe Sói/Dân)
+    skillError: null,       // Lỗi khi dùng kỹ năng (VD: Bảo vệ chọn cùng người)
+    phaseTransition: null,  // { from: 'DAY', to: 'NIGHT' } — dùng để phát âm thanh
     
     // Actions
     setSession: (name, secretId, isAdmin = false) => {
@@ -28,11 +34,20 @@ export const useGameStore = create((set) => ({
         localStorage.removeItem('masoi_playerName');
         localStorage.removeItem('masoi_secretId');
         localStorage.removeItem('masoi_isAdmin');
-        set({ playerName: '', secretId: '', isAdmin: false });
+        set({ playerName: '', secretId: '', isAdmin: false, autoGMState: null });
     },
     setGameState: (newState) => set({ gameState: newState }),
     setMatchCount: (count) => set({ matchCount: count }),
     setLeaderboard: (data) => set({ leaderboard: data }),
     setKicked: (status) => set({ isKicked: status }),
     setCountdown: (val) => set({ countdown: val }),
+
+    // Auto GM Actions
+    setAutoGMState: (state) => set({ autoGMState: state }),
+    setSkillResult: (result) => set({ skillResult: result }),
+    clearSkillResult: () => set({ skillResult: null }),
+    setSkillError: (error) => set({ skillError: error }),
+    clearSkillError: () => set({ skillError: null }),
+    setPhaseTransition: (transition) => set({ phaseTransition: transition }),
+    clearPhaseTransition: () => set({ phaseTransition: null }),
 }));
