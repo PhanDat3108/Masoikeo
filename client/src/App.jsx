@@ -39,6 +39,7 @@ function App() {
     const setSession = useGameStore(state => state.setSession);
     const setIsAdmin = useGameStore(state => state.setIsAdmin);
     const clearSession = useGameStore(state => state.clearSession);
+    const gameState = useGameStore(state => state.gameState);
     const setGameState = useGameStore(state => state.setGameState);
     const setMatchCount = useGameStore(state => state.setMatchCount);
     const setLeaderboard = useGameStore(state => state.setLeaderboard);
