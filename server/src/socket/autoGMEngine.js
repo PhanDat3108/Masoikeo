@@ -1008,8 +1008,8 @@ const startDayVote = (io) => {
         addGameLog('PHASE_CHANGE', { to: 'DAY_REVOTE' });
         
         playVoiceAndWait(io, 'vote_tie_revote', () => {
-            // Re-vote chỉ 15 giây
-            setPhaseTimer(io, 15, () => {
+            // Re-vote 30 giây
+            setPhaseTimer(io, 30, () => {
                 resolveDayVote(io);
             });
         });
