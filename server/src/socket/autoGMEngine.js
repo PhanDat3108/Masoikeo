@@ -332,6 +332,11 @@ const advanceNightPhase = (io) => {
     }
 
     if (autoGM.phase === PHASES.NIGHT_WITCH) {
+        startHunterPhase(io);
+        return;
+    }
+
+    if (autoGM.phase === PHASES.NIGHT_HUNTER) {
         finalizeNightDeaths(io);
         return;
     }
@@ -682,6 +687,41 @@ const startWitchPhase = (io) => {
 const afterWitch = (io) => {
     autoGM.currentTurnRole = null;
     autoGM.phase = PHASES.NIGHT_WITCH;
+    advanceNightPhase(io);
+};
+
+// ---- Thợ săn (Ngắm mục tiêu ban đêm) ----
+const startHunterPhase = (io) => {
+    if (!hasRoleInGame('Thợ săn')) {
+        autoGM.phase = PHASES.NIGHT_HUNTER;
+        advanceNightPhase(io);
+        return;
+    }
+    
+    autoGM.phase = PHASES.NIGHT_HUNTER;
+    autoGM.currentTurnRole = 'Thợ săn';
+    addGameLog('SKILL_TURN', { role: 'Thợ săn' });
+    
+    playVoiceAndWait(io, 'hunter_wake', () => {
+        if (hasAliveRole('Thợ săn')) {
+            setPhaseTimer(io, autoGM.settings.skillDuration, () => {
+                addGameLog('SKILL_SKIP', { role: 'Thợ săn', reason: 'timeout' });
+                afterHunter(io);
+            });
+        } else {
+            // Fake turn
+            const fakeDuration = Math.floor(Math.random() * 6) + 10;
+            setPhaseTimer(io, fakeDuration, () => {
+                afterHunter(io);
+            });
+        }
+    });
+    broadcastState(io);
+};
+
+const afterHunter = (io) => {
+    autoGM.currentTurnRole = null;
+    autoGM.phase = PHASES.NIGHT_HUNTER;
     advanceNightPhase(io);
 };
 

@@ -23,27 +23,56 @@ export const GameLogPopup = ({ logs = [], onClose }) => {
     const formatLog = (log) => {
         const d = log.data;
         switch (log.type) {
-            case 'GAME_START': return 'Trò chơi bắt đầu. Các vai trò đã được phân phát.';
-            case 'SKILL_TURN': return `Tới lượt ${d.role} hành động.`;
-            case 'SKILL_SKIP': return `${d.role} đã bỏ qua lượt (${d.reason === 'timeout' ? 'Hết giờ' : 'Tự nguyện'}).`;
-            case 'WOLF_VOTE': return d.target === 'skip' ? `Sói ${d.wolf} không cắn ai.` : `Sói ${d.wolf} muốn cắn ${d.target}.`;
-            case 'WOLF_BITE': return d.success ? `Bầy Sói đã cắn ${d.target}.` : `Bầy Sói cắn hụt ${d.target} (do được Bảo vệ).`;
-            case 'SEER_CHECK': return `Tiên tri ${d.seer} đã soi ${d.target} và biết người này là ${d.result === 'WOLF' ? 'Sói' : 'Dân'}.`;
-            case 'GUARD_PROTECT': return `Bảo vệ ${d.guard} đã canh gác cho ${d.target}.`;
-            case 'WITCH_HEAL': return `Phù thủy đã cứu ${d.target}.`;
-            case 'WITCH_KILL': return `Phù thủy đã ném bình độc vào ${d.target}.`;
-            case 'CUPID_PAIR': return `Cupid đã ghép đôi ${d.player1} và ${d.player2}.`;
-            case 'HUNTER_AIM': return d.target === 'skip' ? `Thợ săn ${d.hunter} không ngắm bắn ai.` : `Thợ săn ${d.hunter} đã nhắm súng vào ${d.target}.`;
-            case 'HUNTER_DAY_SHOT': return `Thợ săn ${d.hunter} bị chết và nổ súng bắn ${d.target}.`;
-            case 'HUNTER_TRIGGER': return `Thợ săn bị giết, chuẩn bị nổ súng!`;
-            case 'VOTE_FAILED': return `Dân làng không đủ phiếu treo cổ ai.`;
-            case 'VOTE_TIE': return `Hòa phiếu giữa ${d.tied?.join(', ')}. Tiến hành vote lại.`;
-            case 'VOTE_TIE_FINAL': return `Vẫn hòa phiếu! Không ai bị treo cổ.`;
-            case 'HANGED': return `Dân làng đã treo cổ ${d.player} (${d.votes} phiếu).`;
-            case 'DEATH': return `${d.player} đã chết vì ${d.reason === 'WOLF_BITE' ? 'vết cắn của Sói' : d.reason === 'WITCH_KILL' ? 'trúng độc' : d.reason === 'COUPLE' ? 'chết theo người yêu' : 'bị bắn'}. Vai trò: ${d.role}.`;
+            case 'GAME_START': return 'Đêm đầu tiên buông xuống, các vai trò bí mật đã được trao.';
+            case 'SKILL_TURN': return `Lượt của ${d.role} bắt đầu.`;
+            case 'SKILL_SKIP': return d.reason === 'timeout' ? `${d.role} không hành động kịp, tự động bỏ qua.` : `${d.role} quyết định không sử dụng kỹ năng đêm nay.`;
+            case 'WOLF_VOTE': return d.target === 'skip' ? `Sói ${d.wolf} không muốn sát hại ai.` : `Sói ${d.wolf} chỉ định ${d.target} làm con mồi.`;
+            case 'WOLF_BITE': return d.success ? `Bầy Sói đã thống nhất cắn xé ${d.target}.` : `Bầy Sói đã tấn công thất bại, con mồi ${d.target} vẫn sống sót.`;
+            case 'WOLF_RESULT': return d.targetId === 'skip' || !d.targetId ? `Sói không thống nhất được mục tiêu, đêm nay bình yên.` : d.random ? `Sói vote hoà nhau, hệ thống chọn ngẫu nhiên ${d.target} làm con mồi.` : `Bầy sói đã quyết định tấn công ${d.target}.`;
+            case 'WOLF_TIE': return `Sói hoang mang, đang hoà phiếu cắn giữa: ${d.tied?.join(', ')}.`;
+            case 'WOLF_BITE_BLOCKED': return `Cuộc tấn công của Sói nhắm vào ${d.target} đã bị Bảo vệ cản phá!`;
+            case 'CURSED_BITTEN': return `Sói đã cắn ${d.target}, nhưng không ngờ đó là Kẻ Bị Nguyền!`;
+            case 'CURSED_CONVERTED': return `Lờ nguyền ứng nghiệm! ${d.player} đã hoá thân thành Sói.`;
+            case 'SEER_CHECK': return `Tiên tri ${d.seer} soi ${d.target} và phát hiện người này là ${d.result === 'WOLF' ? 'Sói' : 'Dân'}.`;
+            case 'GUARD_PROTECT': return `Bảo vệ ${d.guard} đã thức trắng đêm để canh gác cho ${d.target}.`;
+            case 'WITCH_HEAL': return `Phù thủy đã dùng thuốc tiên cứu mạng ${d.target}.`;
+            case 'WITCH_KILL': return `Phù thủy tàn nhẫn ném bình thuốc độc vào ${d.target}.`;
+            case 'CUPID_PAIR': return `Cupid bắn mũi tên tình yêu, se duyên cho ${d.player1} và ${d.player2}.`;
+            case 'HUNTER_AIM': return d.target === 'skip' ? `Thợ săn ${d.hunter} cất súng, không nhắm vào ai.` : `Thợ săn ${d.hunter} lạnh lùng nhắm súng vào đầu ${d.target}.`;
+            case 'HUNTER_SHOT': return `Trong cơn hấp hối ban đêm, Thợ săn ${d.hunter} đã nổ súng bắn chết ${d.target}.`;
+            case 'HUNTER_CHAIN_SHOT': return `Viên đạn định mệnh của Thợ săn nổ ra, ghim thẳng vào ${d.target}.`;
+            case 'HUNTER_DAY_SHOT': return `Trước khi bị treo cổ, Thợ săn ${d.hunter} phẫn nộ nổ súng bắn chết ${d.target}.`;
+            case 'HUNTER_TRIGGER': return `Thợ săn đang trong cơn thịnh nộ, chuẩn bị nổ súng kéo theo một người xuống mồ!`;
+            case 'VOTE_FAILED': return `Dân làng chia rẽ, không có quyết định treo cổ nào được đưa ra.`;
+            case 'VOTE_TIE': return `Đám đông hoang mang, số phiếu hoà nhau giữa: ${d.tied?.join(', ')}. Tiến hành vote lại...`;
+            case 'VOTE_TIE_FINAL': return `Vẫn không thể thống nhất ý kiến! Không ai bị treo cổ hôm nay.`;
+            case 'VOTE_RESULT': return `Kết quả bỏ phiếu: không ai bị treo.`;
+            case 'HANGED': return `Dân làng đã biểu quyết đưa ${d.player} lên đoạn đầu đài với ${d.votes} phiếu.`;
+            case 'SIDA_HANGED': return `Dân làng đã treo cổ Sida (${d.player}). Thảm hoạ bắt đầu!`;
+            case 'LOVER_DEATH': return `Trái tim tan vỡ, ${d.partnerDied} tự vẫn vì người yêu ${d.dead} đã lìa đời.`;
+            case 'LOVER_CHAIN': return `${d.partnerDied} chết theo tiếng gọi tình yêu.`;
+            case 'DEATH': 
+                let reasonStr = 'lý do bí ẩn';
+                if (d.cause === 'wolf') reasonStr = 'bị Sói cắn xé tàn bạo';
+                else if (d.cause === 'witch_kill') reasonStr = 'trúng kịch độc của Phù thủy';
+                else if (d.cause === 'hunter_shot' || d.cause === 'hunter_chain') reasonStr = 'trúng đạn của Thợ săn';
+                else if (d.cause === 'lover_death') reasonStr = 'tự vẫn vì tình do người yêu chết';
+                return `Xác của ${d.player} được phát hiện (${reasonStr}). Thân phận thật là: ${d.role || 'Không rõ'}.`;
             case 'TIMEOUT': return `Hết thời gian.`;
-            case 'GAME_OVER': return `Ván đấu kết thúc. Phe chiến thắng: ${d.winner === 'WOLF' ? 'SÓI' : d.winner === 'VILLAGER' ? 'DÂN LÀNG' : d.winner === 'COUPLE' ? 'CẶP ĐÔI' : d.winner === 'SIDA' ? 'SIDA' : 'HÒA'}.`;
-            case 'PHASE_CHANGE': return `Chuyển sang giai đoạn ${d.to}`;
+            case 'GAME_OVER': 
+                let winStr = 'HÒA, KHÔNG AI SỐNG SÓT';
+                if (d.winner === 'WOLF') winStr = 'BẦY SÓI ĐÃ TÀN SÁT DÂN LÀNG';
+                else if (d.winner === 'VILLAGER') winStr = 'DÂN LÀNG ĐÃ TIÊU DIỆT HẾT SÓI';
+                else if (d.winner === 'COUPLE') winStr = 'CẶP ĐÔI SỐNG SÓT ĐẾN CUỐI CÙNG';
+                else if (d.winner === 'SIDA') winStr = 'SIDA ĐÃ LÂY BỆNH CHO CẢ LÀNG';
+                return `Ván đấu kết thúc. ${winStr}!`;
+            case 'PHASE_CHANGE': 
+                if (d.to === 'DAY_ANNOUNCE' || d.to === 'DAY') return `Mặt trời mọc, tiếng gà gáy vang, một ngày mới bắt đầu.`;
+                if (d.to === 'DAY_DISCUSS') return `Dân làng thức dậy và bắt đầu thảo luận tìm ra kẻ ác.`;
+                if (d.to === 'DAY_VOTE') return `Dân làng bắt đầu bỏ phiếu treo cổ.`;
+                if (d.to === 'DAY_REVOTE') return `Dân làng hoang mang và phải biểu quyết lại.`;
+                if (d.to === 'NIGHT') return `Mặt trời lặn, bóng tối bao trùm ngôi làng. Sói bắt đầu đi săn.`;
+                return `Hệ thống chuyển sang giai đoạn: ${d.to}`;
             default: return `[Sự kiện] ${JSON.stringify(d)}`;
         }
     };

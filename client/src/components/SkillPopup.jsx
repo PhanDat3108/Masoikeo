@@ -334,6 +334,15 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
 
     // Thợ săn
     if (role === 'Thợ săn') {
+        if (phase !== 'NIGHT_HUNTER' || currentTurnRole !== 'Thợ săn') {
+            return (
+                <PopupWrapper onClose={onClose} title="Thợ Săn">
+                    <p className="text-white/50 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>{desc}</p>
+                    <p className="text-white/30 text-xs italic text-center">Hãy chờ đến lượt Thợ săn...</p>
+                </PopupWrapper>
+            );
+        }
+
         // Thợ săn nhắm mục tiêu ban đêm
         return (
             <PopupWrapper onClose={onClose} title="Thợ Săn · Nhắm">
