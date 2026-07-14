@@ -214,13 +214,7 @@ export const AutoPlayerView = () => {
                             countdown={null}
                         />
 
-                        {/* Tên role + mô tả */}
-                        <div className="text-center">
-                            <h2 className="font-display text-lg text-white/70 tracking-[0.2em]">{currentPlayer.role}</h2>
-                            <p className="text-white/30 text-xs mt-1" style={{ fontFamily: 'var(--font-body)' }}>
-                                {ROLE_SHORT_DESC[currentPlayer.role] || ''}
-                            </p>
-                        </div>
+
 
                         {/* Thông tin người yêu */}
                         {autoGMState?.loverInfo && (

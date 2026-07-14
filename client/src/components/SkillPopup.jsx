@@ -78,7 +78,7 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
         };
 
         return (
-            <PopupWrapper onClose={onClose} title={isRevote ? "BỎ PHIẾU LẠI (HÒA PHIẾU)" : "BỎ PHIẾU BAN NGÀY"} icon={<Crosshair size={16} />}>
+            <PopupWrapper onClose={onClose} title={isRevote ? "BỎ PHIẾU LẠI (HÒA PHIẾU)" : "BỎ PHIẾU BAN NGÀY"}>
                 <p className="text-white/40 text-xs mb-3 text-center" style={{ fontFamily: 'var(--font-body)' }}>
                     {isRevote ? 'Chỉ được chọn 1 trong những người sau:' : 'Chọn 1 người chơi để vote treo cổ:'}
                 </p>
@@ -172,7 +172,7 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
         };
 
         return (
-            <PopupWrapper onClose={onClose} title="Cupid · Ghép Đôi" icon={<HeartHandshake size={16} />}>
+            <PopupWrapper onClose={onClose} title="Cupid · Ghép Đôi">
                 <p className="text-white/40 text-xs mb-3" style={{ fontFamily: 'var(--font-body)' }}>Chọn 2 người yêu nhau ({cupidTargets.length}/2)</p>
                 <PlayerList
                     players={allAlive}
@@ -208,7 +208,7 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
         const wolfTargets = alivePlayers.filter(p => !isPlayerWolf(p.id, autoGMState));
 
         return (
-            <PopupWrapper onClose={onClose} title="Sói · Cắn" icon={<Skull size={16} />}>
+            <PopupWrapper onClose={onClose} title="Sói · Cắn">
                 <p className="text-white/40 text-xs mb-3" style={{ fontFamily: 'var(--font-body)' }}>Chọn người để cắn</p>
                 
                 {/* Hiển thị vote của sói khác */}
@@ -271,7 +271,7 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
         }
 
         return (
-            <PopupWrapper onClose={onClose} title="Tiên Tri · Soi" icon={<Eye size={16} />}>
+            <PopupWrapper onClose={onClose} title="Tiên Tri · Soi">
                 <p className="text-white/40 text-xs mb-3" style={{ fontFamily: 'var(--font-body)' }}>Chọn một người để soi phe</p>
                 <PlayerList
                     players={alivePlayers}
@@ -305,7 +305,7 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
         }
 
         return (
-            <PopupWrapper onClose={onClose} title="Bảo Vệ · Bảo Vệ" icon={<Shield size={16} />}>
+            <PopupWrapper onClose={onClose} title="Bảo Vệ · Bảo Vệ">
                 <p className="text-white/40 text-xs mb-3" style={{ fontFamily: 'var(--font-body)' }}>Chọn một người để bảo vệ (bao gồm bản thân)</p>
                 {skillError && (
                     <div className="p-2 mb-3 text-center" style={{ background: '#1a0808', border: '1px solid #411', borderRadius: '2px' }}>
@@ -336,7 +336,7 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
     if (role === 'Thợ săn') {
         // Thợ săn nhắm mục tiêu ban đêm
         return (
-            <PopupWrapper onClose={onClose} title="Thợ Săn · Nhắm" icon={<Crosshair size={16} />}>
+            <PopupWrapper onClose={onClose} title="Thợ Săn · Nhắm">
                 <p className="text-white/40 text-xs mb-3" style={{ fontFamily: 'var(--font-body)' }}>{desc}</p>
                 <PlayerList
                     players={alivePlayers}
@@ -389,7 +389,7 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
         const killUsed = autoGMState?.nightActions?.witchKillUsed;
 
         return (
-            <PopupWrapper onClose={onClose} title="Phù Thuỷ · Thuốc" icon={<Sparkles size={16} />}>
+            <PopupWrapper onClose={onClose} title="Phù Thuỷ · Thuốc">
                 {/* Hiển thị người bị sói cắn */}
                 {wolfVictim && !healUsed && (
                     <div className="p-3 mb-4" style={{ background: '#1a0808', border: '1px solid #411', borderRadius: '2px' }}>

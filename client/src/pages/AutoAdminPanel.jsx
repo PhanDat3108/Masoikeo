@@ -48,6 +48,7 @@ export const AutoAdminPanel = () => {
     });
 
     const [confirmAction, setConfirmAction] = useState(null);
+    const [isLogClosed, setIsLogClosed] = useState(false);
 
     React.useEffect(() => {
         setConfigCopy([...gameState.rolesConfig]);
@@ -79,14 +80,14 @@ export const AutoAdminPanel = () => {
         socket.emit('autoGM:updateSettings', settings);
     };
     const handleStartGame = () => {
-        requestConfirm("Chia bài và bắt đầu?", () => socket.emit('autoGM:startGame'));
+        requestConfirm("Chia bài và bắt đầu?", () => { socket.emit('autoGM:startGame'); setIsLogClosed(false); });
     };
     const handleBeginGame = () => {
         requestConfirm("Bắt đầu chơi? Game sẽ vào Đêm 1.", () => socket.emit('autoGM:beginGame'));
     };
     const handlePause = () => { socket.emit('autoGM:pause'); };
     const handleResume = () => { socket.emit('autoGM:resume'); };
-    const handleStop = () => { requestConfirm("Hủy ván hiện tại và đưa mọi người về phòng chờ (Reset)?", () => socket.emit('autoGM:stop')); };
+    const handleStop = () => { requestConfirm("Hủy ván hiện tại và đưa mọi người về phòng chờ (Reset)?", () => { socket.emit('autoGM:stop'); setIsLogClosed(false); }); };
     const handleSkip = () => { requestConfirm("Tua qua bước hiện tại?", () => socket.emit('autoGM:skipPhase')); };
 
     const players = gameState.players.filter(p => !p.isAdmin);
@@ -329,10 +330,6 @@ export const AutoAdminPanel = () => {
                                             )}
                                         </span>
                                     )}
-                                </div>
-                            </div>
-                        ))}
-                        
                         {players.length === 0 && (
                             <div className="py-12 text-center">
                                 <div className="text-white/10 text-3xl mb-3">☽</div>
@@ -342,21 +339,6 @@ export const AutoAdminPanel = () => {
                             </div>
                         )}
                     </div>
-
-                    {/* Game Log (hiện khi đang trong game) */}
-                    {isInGame && autoGMState?.gameLog && autoGMState.gameLog.length > 0 && (
-                        <div className="mt-4 pt-3" style={{ borderTop: '1px solid #222' }}>
-                            <h3 className="font-heading text-[10px] text-white/30 tracking-[0.2em] mb-2">NHẬT KÝ GẦN NHẤT</h3>
-                            <div className="space-y-0.5 max-h-[15vh] overflow-y-auto pr-1">
-                                {[...autoGMState.gameLog].reverse().slice(0, 10).map((log, i) => (
-                                    <div key={i} className="text-[10px] text-white/30 py-0.5" style={{ fontFamily: 'var(--font-body)' }}>
-                                        <span className="text-white/15 mr-1">[{log.type}]</span>
-                                        {JSON.stringify(log.data)}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
                 </div>
 
             </div>
@@ -374,6 +356,98 @@ export const AutoAdminPanel = () => {
                     </div>
                 </div>
             )}
+
+            {/* Game Log Popup (Chỉ hiện khi GAME OVER) */}
+            {phase === 'GAME_OVER' && autoGMState?.gameLog && !isLogClosed && (
+                <GameLogPopup logs={autoGMState.gameLog} onClose={() => setIsLogClosed(true)} />
+            )}
+        </div>
+    );
+};
+
+// =============================================
+// HELPER COMPONENTS
+// =============================================
+
+// Game Log Popup Component
+const GameLogPopup = ({ logs }) => {
+    // Nhóm logs theo Ngày/Đêm
+    const groupedLogs = [];
+    let currentGroup = { title: "Bắt đầu Game", logs: [] };
+
+    logs.forEach(log => {
+        if (log.type === 'PHASE_CHANGE') {
+            groupedLogs.push(currentGroup);
+            const isNight = log.data.to === 'NIGHT';
+            currentGroup = {
+                title: isNight ? `Đêm ${log.data.nightCount}` : `Ngày ${log.data.dayCount}`,
+                logs: []
+            };
+        } else {
+            currentGroup.logs.push(log);
+        }
+    });
+    if (currentGroup.logs.length > 0) groupedLogs.push(currentGroup);
+
+    const formatLog = (log) => {
+        const d = log.data;
+        switch (log.type) {
+            case 'GAME_START': return 'Trò chơi bắt đầu. Các vai trò đã được phân phát bí mật.';
+            case 'SKILL_TURN': return `Tới lượt ${d.role} hành động.`;
+            case 'SKILL_SKIP': return `${d.role} đã quyết định bỏ qua lượt (${d.reason === 'timeout' ? 'Hết giờ' : 'Chủ động'}).`;
+            case 'WOLF_VOTE': return d.target === 'skip' ? `Sói ${d.wolf} không cắn ai.` : `Sói ${d.wolf} đề xuất cắn ${d.target}.`;
+            case 'WOLF_BITE': return d.success ? `Bầy Sói đã cắn ${d.target}.` : `Bầy Sói đã cắn hụt ${d.target} (do được Bảo vệ).`;
+            case 'SEER_CHECK': return `Tiên tri ${d.seer} đã soi ${d.target} và phát hiện là ${d.result === 'WOLF' ? 'Sói' : 'Dân'}.`;
+            case 'GUARD_PROTECT': return `Bảo vệ ${d.guard} đã thức dậy và canh gác cho ${d.target}.`;
+            case 'WITCH_HEAL': return `Phù thủy đã sử dụng bình cứu lên ${d.target}.`;
+            case 'WITCH_KILL': return `Phù thủy đã sử dụng bình độc lên ${d.target}.`;
+            case 'CUPID_PAIR': return `Cupid đã ghép đôi ${d.player1} và ${d.player2}. Mũi tên tình yêu đã kết nối sinh mệnh của họ.`;
+            case 'HUNTER_AIM': return d.target === 'skip' ? `Thợ săn ${d.hunter} thu súng lại.` : `Thợ săn ${d.hunter} đã nhắm súng vào ${d.target}.`;
+            case 'HUNTER_DAY_SHOT': return `Thợ săn ${d.hunter} trước khi chết đã kịp nổ súng kéo theo ${d.target}.`;
+            case 'HUNTER_TRIGGER': return `Thợ săn bị giết, súng đã lên nòng!`;
+            case 'VOTE_FAILED': return `Dân làng tranh cãi kịch liệt nhưng không đủ phiếu treo cổ ai.`;
+            case 'VOTE_TIE': return `Đám đông chia rẽ! Hòa phiếu giữa ${d.tied.join(', ')}. Tổ chức vote lại.`;
+            case 'VOTE_TIE_FINAL': return `Vẫn không thể thống nhất! Dân làng quyết định không treo cổ ai hnay.`;
+            case 'HANGED': return `Dân làng đã thống nhất treo cổ ${d.player} với ${d.votes} phiếu.`;
+            case 'DEATH': return `${d.player} đã gục ngã vì ${d.reason === 'WOLF_BITE' ? 'vết cắn của Sói' : d.reason === 'WITCH_KILL' ? 'trúng độc' : d.reason === 'COUPLE' ? 'chết theo người yêu' : 'lý do bí ẩn'}. Vai trò của họ là ${d.role}.`;
+            case 'TIMEOUT': return `Hết thời gian.`;
+            default: return `[${log.type}] ${JSON.stringify(d)}`;
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}>
+            <div className="gothic-card w-full max-w-2xl max-h-[85vh] flex flex-col relative animate-fadeIn">
+                <button onClick={onClose} className="absolute top-4 right-4 text-white/40 hover:text-white">
+                    <LogOut size={16} />
+                </button>
+                <h2 className="font-display text-xl text-white/80 tracking-[0.2em] mb-4 text-center pb-4 border-b border-white/10">
+                    NHẬT KÝ QUẢN TRÒ
+                </h2>
+                
+                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
+                    {groupedLogs.map((group, i) => (
+                        <div key={i} className="mb-4">
+                            <h3 className="font-heading text-sm text-red-400/80 tracking-widest mb-3 pb-1 border-b border-red-900/30 inline-block">
+                                ◆ {group.title.toUpperCase()}
+                            </h3>
+                            <div className="space-y-2 pl-3 border-l border-white/10 ml-2">
+                                {group.logs.length === 0 && (
+                                    <p className="text-white/30 text-xs italic">Không có sự kiện nào đáng chú ý.</p>
+                                )}
+                                {group.logs.map((log, j) => (
+                                    <div key={j} className="text-xs text-white/60 leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
+                                        <span className="text-white/20 text-[10px] mr-2">
+                                            {new Date(log.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                        </span>
+                                        {formatLog(log)}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
         </div>
     );
 };
