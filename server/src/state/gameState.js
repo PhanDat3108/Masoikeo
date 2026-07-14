@@ -23,5 +23,7 @@ export const gameState = {
 export const matchData = {
     count: 0,
     lastDate: new Date().toDateString(),
-    leaderboard: {}
+    leaderboard: {},
+    // Theo dõi số lần liên tiếp nhận vai Sói: { playerName: consecutiveCount }
+    wolfHistory: {}
 };
