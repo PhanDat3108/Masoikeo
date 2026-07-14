@@ -943,6 +943,8 @@ const checkWinConditionAndAdvance = (io, timeOfDay) => {
     if (timeOfDay === 'NIGHT') {
         startDay(io);
     } else {
+        autoGM.nightCount++;
+        addGameLog('PHASE_CHANGE', { to: PHASES.NIGHT, nightCount: autoGM.nightCount });
         startNight(io);
     }
 };
