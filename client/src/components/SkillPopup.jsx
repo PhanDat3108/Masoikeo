@@ -431,7 +431,7 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
                         className="gothic-btn flex-1 py-2 text-xs text-white/50 hover:text-white"
                         style={{ border: '1px solid rgba(255,255,255,0.1)' }}
                     >
-                        BỎ QUA TẤT CẢ
+                        KHÔNG DÙNG THUỐC
                     </button>
                     <button
                         onClick={() => handleSubmit('witch_action', { heal: witchHeal, kill: witchKill })}
