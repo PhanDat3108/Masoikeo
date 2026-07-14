@@ -35,18 +35,7 @@ export const AutoPlayerView = () => {
     const [hideDeathOverlay, setHideDeathOverlay] = useState(false);
     const [showGameLog, setShowGameLog] = useState(false);
 
-    // Reset states on new game
-    useEffect(() => {
-        if (phase === 'CARDS_DEALT' || phase === 'LOBBY') {
-            setHideDeathOverlay(false);
-            setShowGameLog(false);
-        }
-    }, [phase]);
-    useEffect(() => {
-        if (!autoGMState?.loverInfo) {
-            setHasSeenLoverInfo(false);
-        }
-    }, [autoGMState?.loverInfo]);
+
 
     const currentPlayer = gameState.players.find(p => p.id === socket.id);
     const hasRole = currentPlayer && currentPlayer.role !== '...';
@@ -56,6 +45,20 @@ export const AutoPlayerView = () => {
     const isInGame = phase !== 'LOBBY' && phase !== 'CARDS_DEALT' && phase !== 'GAME_OVER';
     const currentTurnRole = autoGMState?.currentTurnRole;
     const role = currentPlayer?.role || '...';
+
+    // Reset states on new game
+    useEffect(() => {
+        if (phase === 'CARDS_DEALT' || phase === 'LOBBY') {
+            setHideDeathOverlay(false);
+            setShowGameLog(false);
+        }
+    }, [phase]);
+
+    useEffect(() => {
+        if (!autoGMState?.loverInfo) {
+            setHasSeenLoverInfo(false);
+        }
+    }, [autoGMState?.loverInfo]);
 
     // Timer hiển thị
     const [timeLeftStr, setTimeLeftStr] = useState('');
