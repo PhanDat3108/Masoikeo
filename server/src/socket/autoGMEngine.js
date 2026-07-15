@@ -1393,12 +1393,19 @@ export const handleHunterAim = (io, socketId, targetId) => {
     if (targetId === 'skip') {
         autoGM.nightActions.hunterTarget = null;
         addGameLog('HUNTER_AIM', { hunter: player.name, target: 'skip' });
-        return;
+    } else {
+        autoGM.nightActions.hunterTarget = targetId;
+        const target = gameState.players.find(p => p.id === targetId);
+        addGameLog('HUNTER_AIM', { hunter: player.name, target: target?.name });
     }
 
-    autoGM.nightActions.hunterTarget = targetId;
-    const target = gameState.players.find(p => p.id === targetId);
-    addGameLog('HUNTER_AIM', { hunter: player.name, target: target?.name });
+    // Nếu đang trong lượt của Thợ săn thì bỏ qua thời gian chờ
+    if (autoGM.phase === PHASES.NIGHT_HUNTER && autoGM.currentTurnRole === 'Thợ săn') {
+        clearPhaseTimer();
+        afterHunter(io);
+    }
+    
+    broadcastState(io);
 };
 
 // Thợ săn bắn khi bị treo ban ngày
