@@ -58,7 +58,12 @@ export const GameLogPopup = ({ logs = [], players = [], playerMeta = {}, onClose
                 else if (d.cause === 'hunter_shot' || d.cause === 'hunter_chain') reasonStr = 'trúng đạn của Thợ săn';
                 else if (d.cause === 'lover_death') reasonStr = 'tự vẫn vì tình do người yêu chết';
                 return `Xác của ${d.player} được phát hiện (${reasonStr}). Thân phận thật là: ${d.role || 'Không rõ'}.`;
-            case 'TIMEOUT': return `Hết thời gian.`;
+            case 'DAY_VOTE':
+                if (d.target === 'skip') return `${d.voter} đã quyết định không bỏ phiếu.`;
+                const targetPlayer = players.find(p => p.id === d.target);
+                const targetName = targetPlayer ? targetPlayer.name : d.target;
+                return `${d.voter} đã biểu quyết treo cổ ${targetName}.`;
+            case 'TIMEOUT': return null;
             case 'GAME_OVER': 
                 let winStr = 'HÒA, KHÔNG AI SỐNG SÓT';
                 if (d.winner === 'WOLF') winStr = 'BẦY SÓI ĐÃ TÀN SÁT DÂN LÀNG';
@@ -114,20 +119,25 @@ export const GameLogPopup = ({ logs = [], players = [], playerMeta = {}, onClose
                         </div>
                     )}
 
-                    {groupedLogs.map((group, idx) => (
-                        <div key={idx} className="space-y-2">
-                            <h3 className="text-red-400/80 font-heading text-sm tracking-wider sticky top-0 bg-[#0a0a0a] py-1 z-10 border-b border-white/5">
-                                ✦ {group.title}
-                            </h3>
-                            <div className="space-y-1">
-                                {group.logs.map((log, lIdx) => (
-                                    <div key={lIdx} className="text-white/60 text-xs py-1.5 px-3 border-l-2 border-white/10" style={{ fontFamily: 'var(--font-body)' }}>
-                                        {formatLog(log)}
-                                    </div>
-                                ))}
+                    {groupedLogs.map((group, idx) => {
+                        const validLogs = group.logs.map(formatLog).filter(Boolean);
+                        if (validLogs.length === 0) return null;
+                        
+                        return (
+                            <div key={idx} className="space-y-2">
+                                <h3 className="text-red-400/80 font-heading text-sm tracking-wider sticky top-0 bg-[#0a0a0a] py-1 z-10 border-b border-white/5">
+                                    ✦ {group.title}
+                                </h3>
+                                <div className="space-y-1">
+                                    {validLogs.map((logStr, lIdx) => (
+                                        <div key={lIdx} className="text-white/60 text-xs py-1.5 px-3 border-l-2 border-white/10" style={{ fontFamily: 'var(--font-body)' }}>
+                                            {logStr}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                     {logs.length === 0 && (
                         <div className="text-center text-white/30 text-xs italic py-8">
                             Chưa có sự kiện nào.
