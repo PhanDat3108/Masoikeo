@@ -1,7 +1,7 @@
 import React from 'react';
 import { LogOut } from 'lucide-react';
 
-export const GameLogPopup = ({ logs = [], onClose }) => {
+export const GameLogPopup = ({ logs = [], players = [], playerMeta = {}, onClose }) => {
     // Nhóm logs theo Ngày/Đêm
     const groupedLogs = [];
     let currentGroup = { title: "Bắt đầu Game", logs: [] };
@@ -77,6 +77,8 @@ export const GameLogPopup = ({ logs = [], onClose }) => {
         }
     };
 
+    const playerList = players.filter(p => !p.isAdmin);
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}>
             <div className="gothic-card w-full max-w-2xl max-h-[85vh] flex flex-col relative animate-fadeIn">
@@ -86,10 +88,35 @@ export const GameLogPopup = ({ logs = [], onClose }) => {
                 <h2 className="font-display text-xl text-white/80 tracking-[0.2em] mb-4 text-center pb-4 border-b border-white/10">
                     NHẬT KÝ QUẢN TRÒ
                 </h2>
-                <div className="overflow-y-auto flex-1 pr-2 space-y-6 custom-scrollbar">
+                <div className="overflow-y-auto flex-1 pr-2 space-y-8 custom-scrollbar">
+                    
+                    {/* Thêm phần hiển thị danh sách người chơi và vai trò */}
+                    {playerList.length > 0 && (
+                        <div className="space-y-2">
+                            <h3 className="text-blue-400/80 font-heading text-sm tracking-wider sticky top-0 bg-[#0a0a0a] py-1 z-10 border-b border-white/5">
+                                ✦ DANH SÁCH VAI TRÒ
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                                {playerList.map(p => {
+                                    const meta = playerMeta[p.id];
+                                    const roleStr = meta?.originalRole || p.role || 'Không rõ';
+                                    const isConverted = meta?.isConverted;
+                                    return (
+                                        <div key={p.id} className="flex justify-between items-center text-xs py-2 px-3 border border-white/5 rounded-sm bg-[#111]">
+                                            <span className="text-white/80 font-heading truncate">{p.name}</span>
+                                            <span className={`font-heading ${roleStr === 'Sói' || isConverted ? 'text-red-400/80' : 'text-white/50'}`}>
+                                                {roleStr} {isConverted && '(Hoá Sói)'}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
                     {groupedLogs.map((group, idx) => (
                         <div key={idx} className="space-y-2">
-                            <h3 className="text-red-400/80 font-heading text-sm tracking-wider sticky top-0 bg-[#0a0a0a] py-1">
+                            <h3 className="text-red-400/80 font-heading text-sm tracking-wider sticky top-0 bg-[#0a0a0a] py-1 z-10 border-b border-white/5">
                                 ✦ {group.title}
                             </h3>
                             <div className="space-y-1">

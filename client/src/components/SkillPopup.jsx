@@ -522,7 +522,7 @@ export const SeerResultPopup = ({ result, onClose }) => {
                 <p className="text-white/60 text-sm mb-2 font-heading tracking-wider">{result.targetName}</p>
                 <div className={`font-display text-3xl mb-6 ${result.result === 'WOLF' ? 'text-red-500/80' : 'text-white/70'}`}
                     style={{ textShadow: `0 0 20px ${result.result === 'WOLF' ? 'rgba(255,0,0,0.3)' : 'rgba(255,255,255,0.1)'}` }}>
-                    {result.result === 'WOLF' ? '🐺 SÓI' : '🏠 DÂN'}
+                    {result.result === 'WOLF' ? ' SÓI' : ' DÂN'}
                 </div>
                 <button onClick={onClose} className="gothic-btn gothic-btn-primary w-full py-2.5">
                     ĐÃ HIỂU

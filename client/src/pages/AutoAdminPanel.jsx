@@ -373,7 +373,12 @@ export const AutoAdminPanel = () => {
 
             {/* Game Log Popup (Chỉ hiện khi GAME OVER) */}
             {autoGMState?.phase === 'GAME_OVER' && !isLogClosed && (
-                <GameLogPopup logs={autoGMState?.gameLog || []} onClose={() => setIsLogClosed(true)} />
+                <GameLogPopup 
+                    logs={autoGMState?.gameLog || []} 
+                    players={gameState.players}
+                    playerMeta={autoGMState?.playerMeta || {}}
+                    onClose={() => setIsLogClosed(true)} 
+                />
             )}
 
             {/* Popups tổng kết ban ngày */}

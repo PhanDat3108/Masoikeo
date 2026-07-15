@@ -421,7 +421,12 @@ export const AutoPlayerView = () => {
 
             {/* Game Log Popup */}
             {showGameLog && phase === 'GAME_OVER' && (
-                <GameLogPopup logs={autoGMState?.gameLog || []} onClose={() => setShowGameLog(false)} />
+                <GameLogPopup 
+                    logs={autoGMState?.gameLog || []} 
+                    players={gameState.players}
+                    playerMeta={autoGMState?.playerMeta || {}}
+                    onClose={() => setShowGameLog(false)} 
+                />
             )}
 
             {/* Confirm Modal */}
