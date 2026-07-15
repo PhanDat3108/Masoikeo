@@ -131,7 +131,8 @@ function App() {
             if (me.isAdmin) {
                 setGameResult({ message: `VÁN ĐẤU KẾT THÚC`, teamName, isWin: true });
             } else {
-                setGameResult({ message: isWin ? 'CHIẾN THẮNG' : 'THẤT BẠI', teamName, isWin });
+                const message = teamName === 'HÒA' ? 'HÒA NHAU' : (isWin ? 'CHIẾN THẮNG' : 'THẤT BẠI');
+                setGameResult({ message, teamName, isWin });
             }
         };
 
@@ -329,8 +330,8 @@ function App() {
                             {gameResult.message}
                         </h2>
                         {gameResult.teamName && (
-                            <p className="font-heading text-white/50 tracking-[0.2em] mb-8 text-xs">
-                                {gameResult.teamName} GIÀNH CHIẾN THẮNG
+                            <p className="font-heading text-white/50 tracking-[0.2em] mb-8 text-xs leading-relaxed">
+                                {gameResult.teamName === 'HÒA' ? 'VÁN ĐẤU HÒA, KHÔNG AI SỐNG SÓT' : `${gameResult.teamName} GIÀNH CHIẾN THẮNG`}
                             </p>
                         )}
                         <button
