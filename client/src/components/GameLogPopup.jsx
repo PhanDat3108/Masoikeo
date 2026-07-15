@@ -7,18 +7,24 @@ export const GameLogPopup = ({ logs = [], players = [], playerMeta = {}, onClose
     let currentGroup = { title: "Bắt đầu Game", logs: [] };
 
     logs.forEach(log => {
-        if (log.type === 'PHASE_CHANGE') {
-            groupedLogs.push(currentGroup);
+        if (log.type === 'PHASE_CHANGE' && (log.data.to === 'NIGHT' || log.data.to === 'DAY')) {
+            // Push group cũ nếu đã có log hoặc không phải group mặc định
+            if (currentGroup.logs.length > 0 || currentGroup.title !== "Bắt đầu Game") {
+                groupedLogs.push(currentGroup);
+            }
             const isNight = log.data.to === 'NIGHT';
             currentGroup = {
                 title: isNight ? `Đêm ${log.data.nightCount}` : `Ngày ${log.data.dayCount}`,
                 logs: []
             };
-        } else {
-            currentGroup.logs.push(log);
         }
+        
+        // Push tất cả log vào group hiện tại (để hiển thị formatLog)
+        currentGroup.logs.push(log);
     });
-    if (currentGroup.logs.length > 0) groupedLogs.push(currentGroup);
+    if (currentGroup.logs.length > 0 || currentGroup.title !== "Bắt đầu Game") {
+        groupedLogs.push(currentGroup);
+    }
 
     const formatLog = (log) => {
         const d = log.data;
