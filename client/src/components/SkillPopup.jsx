@@ -90,7 +90,7 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
                     onSelect={(id) => setSelectedTarget(id)}
                     myId={myId}
                 />
-                
+
                 {/* Nút hành động */}
                 <div className="flex gap-2 mt-4">
                     <button
@@ -210,7 +210,7 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
         return (
             <PopupWrapper onClose={onClose} title="Sói · Cắn">
                 <p className="text-white/40 text-xs mb-3" style={{ fontFamily: 'var(--font-body)' }}>Chọn người để cắn</p>
-                
+
                 {/* Hiển thị vote của sói khác */}
                 {wolfVotes && Object.keys(wolfVotes).length > 0 && (
                     <div className="mb-3 p-2" style={{ background: '#0A0A0A', border: '1px solid #222', borderRadius: '2px' }}>
@@ -254,14 +254,14 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
                 <PopupWrapper onClose={onClose} title="Tiên Tri">
                     <p className="text-white/50 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>{desc}</p>
                     {skillResult?.type === 'seer_result' && (
-                        <div className="p-3 mb-4 text-center" style={{ 
+                        <div className="p-3 mb-4 text-center" style={{
                             background: skillResult.result === 'WOLF' ? '#1a0808' : '#081a08',
                             border: `1px solid ${skillResult.result === 'WOLF' ? '#411' : '#141'}`,
                             borderRadius: '2px'
                         }}>
                             <p className="text-white/60 text-xs mb-1">{skillResult.targetName}</p>
                             <p className={`font-heading text-lg tracking-wider ${skillResult.result === 'WOLF' ? 'text-red-400/90' : 'text-green-400/70'}`}>
-                                {skillResult.result === 'WOLF' ? '🐺 PHE SÓI' : '🏠 PHE DÂN'}
+                                {skillResult.result === 'WOLF' ? ' PHE SÓI' : ' PHE DÂN'}
                             </p>
                         </div>
                     )}
@@ -334,15 +334,6 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
 
     // Thợ săn
     if (role === 'Thợ săn') {
-        if (phase !== 'NIGHT_HUNTER' || currentTurnRole !== 'Thợ săn') {
-            return (
-                <PopupWrapper onClose={onClose} title="Thợ Săn">
-                    <p className="text-white/50 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>{desc}</p>
-                    <p className="text-white/30 text-xs italic text-center">Hãy chờ đến lượt Thợ săn...</p>
-                </PopupWrapper>
-            );
-        }
-
         // Thợ săn nhắm mục tiêu ban đêm
         return (
             <PopupWrapper onClose={onClose} title="Thợ Săn · Nhắm">
@@ -354,13 +345,13 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
                     myId={myId}
                 />
                 <div className="flex gap-2 mt-4">
-                    <button 
+                    <button
                         onClick={() => {
                             socket.emit('autoGM:hunterAim', 'skip');
                             onClose();
                             setSelectedTarget(null);
-                        }} 
-                        className="gothic-btn flex-1 py-2.5 text-xs text-white/50 hover:text-white" 
+                        }}
+                        className="gothic-btn flex-1 py-2.5 text-xs text-white/50 hover:text-white"
                         style={{ border: '1px solid rgba(255,255,255,0.1)' }}
                     >
                         BỎ QUA
@@ -440,7 +431,7 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
                         className="gothic-btn flex-1 py-2 text-xs text-white/50 hover:text-white"
                         style={{ border: '1px solid rgba(255,255,255,0.1)' }}
                     >
-                        KHÔNG DÙNG THUỐC
+                        BỎ QUA TẤT CẢ
                     </button>
                     <button
                         onClick={() => handleSubmit('witch_action', { heal: witchHeal, kill: witchKill })}
@@ -498,11 +489,10 @@ const PlayerList = ({ players, selectedIds = [], onSelect, myId }) => (
                 <button
                     key={p.id}
                     onClick={() => onSelect(p.id)}
-                    className={`w-full text-left p-2.5 px-3 flex justify-between items-center transition-all ${
-                        isSelected
-                            ? 'bg-white/10 border border-white/40 text-white'
-                            : 'bg-[#111] border border-[#1a1a1a] text-white/60 hover:bg-[#1a1a1a] hover:text-white/90'
-                    }`}
+                    className={`w-full text-left p-2.5 px-3 flex justify-between items-center transition-all ${isSelected
+                        ? 'bg-white/10 border border-white/40 text-white'
+                        : 'bg-[#111] border border-[#1a1a1a] text-white/60 hover:bg-[#1a1a1a] hover:text-white/90'
+                        }`}
                     style={{ borderRadius: '2px' }}
                 >
                     <span className="font-heading text-sm tracking-wider">
