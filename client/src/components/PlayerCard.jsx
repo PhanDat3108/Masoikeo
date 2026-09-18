@@ -32,7 +32,7 @@ export const PlayerCard = React.memo(({ role, isFlipped, onClick, countdown = nu
 
     return (
         <div 
-            className={`relative group perspective-1000 w-64 h-[22rem] mx-auto select-none transition-transform duration-300 ease-out hover:scale-[1.03] active:scale-[0.98] ${countdown === null ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+            className={`relative group perspective-1000 card-responsive mx-auto select-none transition-transform duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] ${countdown === null ? 'cursor-pointer' : 'cursor-not-allowed'}`}
             onClick={countdown === null ? onClick : undefined}
             style={{ touchAction: 'manipulation' }}
         >
@@ -54,12 +54,14 @@ export const PlayerCard = React.memo(({ role, isFlipped, onClick, countdown = nu
                 >
                     {countdown !== null && (
                         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/85 backdrop-blur-md rounded-md animate-fadeIn">
-                            <div className="text-7xl text-white font-display drop-shadow-[0_0_25px_rgba(255,255,255,0.6)] animate-mysticPulse"
-                                 style={{ letterSpacing: '0', transform: 'translateX(-4px)' }}>
-                                {countdown}
+                            <div className="relative flex items-center justify-center">
+                                <div className="absolute w-28 h-28 rounded-full border border-amber-500/30 animate-ping opacity-30"></div>
+                                <div className="text-6xl sm:text-7xl text-white font-display drop-shadow-[0_0_25px_rgba(255,255,255,0.7)] animate-mysticPulse">
+                                    {countdown}
+                                </div>
                             </div>
-                            <div className="mt-4 text-white/60 text-[10px] tracking-[0.4em] font-heading">
-                                CHUẨN BỊ...
+                            <div className="mt-4 text-amber-300/80 text-[10px] tracking-[0.4em] font-heading animate-pulse">
+                                CHUẨN BỊ THỨC TỈNH...
                             </div>
                         </div>
                     )}

@@ -17,6 +17,56 @@
   --animate-runeRotate: runeRotate 35s linear infinite;
   --animate-bloodPulse: bloodPulse 2.5s ease-in-out infinite;
   --animate-moonGlow: moonGlow 3.5s ease-in-out infinite alternate;
+  --animate-victoryGold: victoryGold 3s ease-in-out infinite alternate;
+  --animate-bloodMist: bloodMist 3s ease-in-out infinite alternate;
+  --animate-altarPulse: altarPulse 4s ease-in-out infinite;
+  --animate-soulFlame: soulFlame 2s ease-in-out infinite alternate;
+
+  @keyframes victoryGold {
+    0% {
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.25), 0 0 50px rgba(234, 179, 8, 0.15);
+      border-color: rgba(245, 158, 11, 0.4);
+    }
+    100% {
+      box-shadow: 0 0 45px rgba(245, 158, 11, 0.6), 0 0 80px rgba(234, 179, 8, 0.35);
+      border-color: rgba(245, 158, 11, 0.85);
+    }
+  }
+
+  @keyframes bloodMist {
+    0% {
+      box-shadow: 0 0 25px rgba(225, 29, 72, 0.3), 0 0 50px rgba(159, 18, 57, 0.2);
+      border-color: rgba(225, 29, 72, 0.45);
+    }
+    100% {
+      box-shadow: 0 0 50px rgba(225, 29, 72, 0.65), 0 0 90px rgba(159, 18, 57, 0.4);
+      border-color: rgba(225, 29, 72, 0.9);
+    }
+  }
+
+  @keyframes altarPulse {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.15), inset 0 0 15px rgba(99, 102, 241, 0.1);
+      border-color: rgba(99, 102, 241, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px rgba(99, 102, 241, 0.35), inset 0 0 30px rgba(99, 102, 241, 0.25);
+      border-color: rgba(99, 102, 241, 0.65);
+    }
+  }
+
+  @keyframes soulFlame {
+    0% {
+      transform: translateY(0px) scale(1);
+      opacity: 0.7;
+      filter: drop-shadow(0 0 12px rgba(225, 29, 72, 0.4));
+    }
+    100% {
+      transform: translateY(-5px) scale(1.08);
+      opacity: 1;
+      filter: drop-shadow(0 0 25px rgba(225, 29, 72, 0.8));
+    }
+  }
 
   @keyframes mysticPulse {
     0%, 100% {
@@ -533,4 +583,75 @@ body::after {
   background-repeat: no-repeat;
   animation: run-wolf 0.7s step-end infinite;
   filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+}
+
+/* ================================================
+   MOBILE & CINEMATIC GAME MOMENTS UTILITIES
+   ================================================ */
+
+.safe-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-top: max(env(safe-area-inset-top, 0px), 1rem);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 1rem);
+}
+
+/* Bệ Thờ Cổ Tự (Arcane Altar) cho phòng chờ */
+.arcane-altar-slot {
+  position: relative;
+  background: radial-gradient(circle at 50% 40%, rgba(26, 26, 38, 0.95), rgba(10, 10, 14, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  box-shadow: 
+    0 15px 35px -5px rgba(0, 0, 0, 0.8),
+    inset 0 0 30px rgba(0, 0, 0, 0.8),
+    0 0 20px rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+  transition: all 0.4s ease;
+}
+
+.arcane-altar-slot::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.arcane-altar-slot::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, rgba(129, 140, 248, 0.08) 0%, transparent 60%);
+  animation: runeRotate 25s linear infinite;
+  pointer-events: none;
+}
+
+/* Màn sương vong linh (Soul Mist) */
+.soul-mist-overlay {
+  background: radial-gradient(circle at 50% 30%, rgba(30, 10, 16, 0.96) 0%, rgba(8, 8, 12, 0.98) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Card sizing token for mobile / desktop */
+.card-responsive {
+  width: 15.5rem;
+  height: 21.5rem;
+}
+@media (min-width: 400px) {
+  .card-responsive {
+    width: 16.5rem;
+    height: 22.5rem;
+  }
+}
+@media (min-width: 640px) {
+  .card-responsive {
+    width: 17rem;
+    height: 23.5rem;
+  }
 }

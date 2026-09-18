@@ -105,11 +105,27 @@ function App() {
             else if (winningTeam === 'COUPLE') teamName = 'PHE CẶP ĐÔI';
             else if (winningTeam === 'SIDA' || winningTeam === 'SIDA_SOLO') teamName = 'PHE SIDA';
 
+            const winnersList = state.gameState.players.filter(p => Array.isArray(winners) && winners.includes(p.id));
+
             if (me.isAdmin) {
-                setGameResult({ message: `VÁN ĐẤU KẾT THÚC`, teamName, isWin: true });
+                setGameResult({ 
+                    message: `VÁN ĐẤU KẾT THÚC`, 
+                    teamName, 
+                    isWin: true, 
+                    winningTeam, 
+                    isAdmin: true,
+                    winnersList 
+                });
             } else {
                 const message = teamName === 'HÒA' ? 'HÒA NHAU' : (isWin ? 'CHIẾN THẮNG' : 'THẤT BẠI');
-                setGameResult({ message, teamName, isWin });
+                setGameResult({ 
+                    message, 
+                    teamName, 
+                    isWin, 
+                    winningTeam, 
+                    isAdmin: false,
+                    winnersList 
+                });
             }
         };
 
@@ -265,29 +281,100 @@ function App() {
             <div className="magic-circle" style={{ top: '-150px', right: '-150px', opacity: 0.4, zIndex: 1 }}></div >
             <div className="magic-circle" style={{ bottom: '-200px', left: '-200px', opacity: 0.2, animationDirection: 'reverse', zIndex: 1 }}></div>
 
-            {/* Game Result Modal */}
-            {gameResult && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md animate-fadeIn">
-                    <div className="gothic-card animate-modalPop text-center flex flex-col items-center justify-center p-8 max-w-sm w-11/12 border border-white/20 shadow-[0_0_50px_rgba(0,0,0,0.9)]">
-                        <div className="text-white/30 text-xs tracking-[0.5em] mb-4">— ✦ —</div>
-                        <h2 className={`font-display text-4xl mb-2 drop-shadow-[0_0_20px_rgba(255,255,255,0.25)] ${gameResult.isWin ? 'text-[#e0e0e0]' : 'text-red-500/90'}`}>
-                            {gameResult.message}
-                        </h2>
-                        {gameResult.teamName && (
-                            <p className="font-heading text-white/60 tracking-[0.2em] mb-8 text-xs leading-relaxed">
-                                {gameResult.teamName === 'HÒA' ? 'VÁN ĐẤU HÒA, KHÔNG AI SỐNG SÓT' : `${gameResult.teamName} GIÀNH CHIẾN THẮNG`}
+            {/* Game Result Modal — Cinematic Faction Themes */}
+            {gameResult && (() => {
+                const isWolfWin = gameResult.winningTeam === 'WOLF' || gameResult.winningTeam === 'WEREWOLF';
+                const isVillagerWin = gameResult.winningTeam === 'VILLAGER';
+                const isCoupleWin = gameResult.winningTeam === 'COUPLE';
+                const isSidaWin = gameResult.winningTeam === 'SIDA' || gameResult.winningTeam === 'SIDA_SOLO';
+                const isDraw = gameResult.teamName === 'HÒA';
+
+                let factionIcon = '⚖️';
+                let factionTitle = 'HOANG TÀN ĐỔ NÁT';
+                let cardThemeClass = 'border-white/20 shadow-[0_0_50px_rgba(0,0,0,0.9)]';
+                let titleColorClass = 'text-slate-200';
+
+                if (isWolfWin) {
+                    factionIcon = '🐺';
+                    factionTitle = 'HUYẾT NGUYỆT BAO TRÙM';
+                    cardThemeClass = 'border-red-500/40 shadow-[0_0_60px_rgba(225,29,72,0.4)] animate-bloodMist';
+                    titleColorClass = 'text-red-400 drop-shadow-[0_2px_12px_rgba(225,29,72,0.5)]';
+                } else if (isVillagerWin) {
+                    factionIcon = '☀';
+                    factionTitle = 'BÌNH MINH CHIẾU RỌI';
+                    cardThemeClass = 'border-amber-400/40 shadow-[0_0_60px_rgba(245,158,11,0.35)] animate-victoryGold';
+                    titleColorClass = 'text-amber-300 drop-shadow-[0_2px_12px_rgba(245,158,11,0.5)]';
+                } else if (isCoupleWin) {
+                    factionIcon = '💕';
+                    factionTitle = 'TÌNH YÊU BẤT TỬ';
+                    cardThemeClass = 'border-pink-500/40 shadow-[0_0_60px_rgba(244,114,182,0.35)]';
+                    titleColorClass = 'text-pink-300 drop-shadow-[0_2px_12px_rgba(244,114,182,0.5)]';
+                } else if (isSidaWin) {
+                    factionIcon = '☣️';
+                    factionTitle = 'THẢM HỌA LAN TRÀN';
+                    cardThemeClass = 'border-purple-500/40 shadow-[0_0_60px_rgba(168,85,247,0.35)]';
+                    titleColorClass = 'text-purple-300 drop-shadow-[0_2px_12px_rgba(168,85,247,0.5)]';
+                }
+
+                return (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fadeIn">
+                        <div className={`gothic-card animate-modalPop text-center flex flex-col items-center justify-center p-6 sm:p-8 max-w-sm w-full border ${cardThemeClass} relative`}>
+                            {/* Decorative header */}
+                            <div className="text-white/30 text-[10px] tracking-[0.4em] font-heading mb-3 uppercase">— KẾT QUẢ VÁN ĐẤU —</div>
+
+                            <div className="text-5xl sm:text-6xl mb-2 animate-float filter drop-shadow-md">
+                                {factionIcon}
+                            </div>
+
+                            <h2 className={`font-display text-2xl sm:text-3xl font-bold tracking-[0.2em] mb-1 ${titleColorClass}`}>
+                                {factionTitle}
+                            </h2>
+
+                            <p className="font-heading text-white/80 tracking-[0.2em] text-xs font-semibold uppercase mb-4">
+                                {gameResult.teamName === 'HÒA' ? 'VÁN ĐẤU HÒA · KHÔNG AI SỐNG SÓT' : `${gameResult.teamName} CHIẾN THẮNG`}
                             </p>
-                        )}
-                        <button
-                            className="gothic-btn gothic-btn-primary px-8 py-3 w-full shadow-[0_0_20px_rgba(255,255,255,0.1)]"
-                            onClick={() => setGameResult(null)}
-                        >
-                            ĐÓNG
-                        </button>
-                        <div className="text-white/30 text-xs tracking-[0.5em] mt-6">— ✦ —</div>
+
+                            {/* Personal outcome pill */}
+                            {!gameResult.isAdmin && (
+                                <div className={`my-3 py-1.5 px-4 rounded-full border text-xs font-heading tracking-widest uppercase flex items-center gap-2 ${
+                                    gameResult.isWin 
+                                        ? 'bg-amber-950/60 border-amber-500/50 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.3)] animate-pulse' 
+                                        : 'bg-red-950/40 border-red-500/30 text-red-400'
+                                }`}>
+                                    <span>{gameResult.isWin ? '👑' : '☠'}</span>
+                                    <span>{gameResult.isWin ? 'BẠN ĐÃ CHIẾN THẮNG' : 'BẠN ĐÃ THẤT BẠI'}</span>
+                                </div>
+                            )}
+
+                            {/* Winners List */}
+                            {gameResult.winnersList && gameResult.winnersList.length > 0 && (
+                                <div className="w-full my-3 p-3 rounded bg-white/[0.03] border border-white/10 text-left">
+                                    <p className="text-[10px] font-heading text-white/40 tracking-wider mb-2 uppercase text-center">
+                                        ✦ NGƯỜI CHIẾN THẮNG ✦
+                                    </p>
+                                    <div className="flex flex-wrap gap-1.5 justify-center max-h-24 overflow-y-auto custom-scrollbar pr-1">
+                                        {gameResult.winnersList.map(p => (
+                                            <span 
+                                                key={p.id} 
+                                                className="text-[11px] font-heading px-2 py-0.5 rounded bg-white/5 border border-white/10 text-white/90"
+                                            >
+                                                {p.name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <button
+                                className="gothic-btn gothic-btn-primary px-8 py-3 w-full mt-4 text-xs tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.15)] uppercase"
+                                onClick={() => setGameResult(null)}
+                            >
+                                TIẾP TỤC
+                            </button>
+                        </div>
                     </div>
-                </div>
-            )}
+                );
+            })()}
 
             <div className="relative z-10 w-full h-full flex">
                 {!playerName ? (

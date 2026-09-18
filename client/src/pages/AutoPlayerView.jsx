@@ -144,94 +144,136 @@ export const AutoPlayerView = () => {
     }
 
     return (
-        <div className="flex flex-col items-center justify-center h-full p-4 relative w-full max-w-md mx-auto animate-fadeIn">
+        <div className="flex flex-col items-center justify-between safe-dvh p-3 sm:p-4 relative w-full max-w-md mx-auto animate-fadeIn overflow-x-hidden">
 
-            {/* Header */}
-            <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
-                <div className="font-heading text-white/60 tracking-[0.15em] text-sm">
-                    <span className="text-white/30">✦</span>
-                    <span className="ml-2">{currentPlayer.name}</span>
+            {/* Header Bar - Mobile Optimized */}
+            <header className="w-full flex justify-between items-center z-20 py-2 px-3 rounded-full bg-black/60 backdrop-blur-md border border-white/10 shadow-lg">
+                <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${currentPlayer.isAlive ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse'}`}></span>
+                    <span className="font-heading text-white/90 text-xs sm:text-sm tracking-wider font-semibold truncate max-w-[140px] sm:max-w-[180px]">
+                        {currentPlayer.name}
+                    </span>
+                    {!currentPlayer.isAlive && (
+                        <span className="text-[10px] font-heading px-1.5 py-0.5 rounded bg-red-950/80 border border-red-500/30 text-red-300">
+                            VONG HỒN
+                        </span>
+                    )}
                 </div>
-                <button onClick={handleLogout} className="gothic-btn p-2" title="Đăng xuất"
-                    style={{ padding: '0.4rem 0.6rem' }}>
-                    <LogOut size={16} />
-                </button>
-            </div>
+                <div className="flex items-center gap-2">
+                    {!currentPlayer.isAlive && hideDeathOverlay && (
+                        <button 
+                            onClick={() => setHideDeathOverlay(false)} 
+                            className="text-[10px] font-heading px-2 py-1 rounded bg-white/5 border border-white/10 text-white/60 hover:text-white"
+                        >
+                            ☠ TỬ SĨ
+                        </button>
+                    )}
+                    <button 
+                        onClick={handleLogout} 
+                        className="p-1.5 text-white/40 hover:text-rose-400 hover:bg-white/5 rounded-full transition-colors" 
+                        title="Đăng xuất"
+                    >
+                        <LogOut size={16} />
+                    </button>
+                </div>
+            </header>
 
             {/* ===== TRẠNG THÁI NGÀY/ĐÊM ===== */}
             {isInGame && (
-                <div className="absolute top-16 left-4 right-4 text-center z-10">
-                    <div className={`font-display text-2xl tracking-[0.3em] ${isNight ? 'text-blue-200/50' : 'text-yellow-200/50'}`}
-                         style={{ textShadow: `0 0 30px ${isNight ? 'rgba(100,100,255,0.2)' : 'rgba(255,255,100,0.2)'}` }}>
+                <div className="w-full text-center z-10 my-2">
+                    <div className={`font-display text-xl sm:text-2xl tracking-[0.25em] ${isNight ? 'text-indigo-300 drop-shadow-[0_0_20px_rgba(99,102,241,0.4)]' : 'text-amber-300 drop-shadow-[0_0_20px_rgba(245,158,11,0.4)]'}`}>
                         {isNight ? '🌙 BAN ĐÊM' : '☀ BAN NGÀY'}
                     </div>
 
                     {/* Phase label + Timer */}
-                    <div className="mt-2 flex items-center justify-center gap-3">
+                    <div className="mt-1 flex items-center justify-center gap-2.5">
                         {currentTurnRole && isNight && (
-                            <span className="text-white/30 text-[10px] font-heading tracking-wider animate-mysticPulse">
+                            <span className="text-indigo-300/80 text-[11px] font-heading tracking-wider animate-mysticPulse px-2 py-0.5 rounded bg-indigo-950/40 border border-indigo-500/20">
                                 {currentTurnRole === role || isMyTurn ? '✦ ĐẾN LƯỢT BẠN ✦' : `${currentTurnRole} đang hành động...`}
                             </span>
                         )}
                         {phase === 'DAY_DISCUSS' && (
-                            <span className="text-white/40 text-[10px] font-heading tracking-wider">THẢO LUẬN</span>
+                            <span className="text-amber-200/90 text-[11px] font-heading tracking-wider px-2 py-0.5 rounded bg-amber-950/40 border border-amber-500/20">
+                                💬 THẢO LUẬN
+                            </span>
                         )}
                         {phase === 'DAY_VOTE' && (
-                            <span className="text-red-400/60 text-[10px] font-heading tracking-wider animate-mysticPulse">BỎ PHIẾU</span>
+                            <span className="text-red-400 text-[11px] font-heading tracking-wider px-2 py-0.5 rounded bg-red-950/60 border border-red-500/40 animate-pulse">
+                                🗳 BỎ PHIẾU
+                            </span>
                         )}
-
                         {phase === 'DAY_ANNOUNCE' && (
-                            <span className="text-white/40 text-[10px] font-heading tracking-wider">CÔNG BỐ</span>
+                            <span className="text-slate-300 text-[11px] font-heading tracking-wider px-2 py-0.5 rounded bg-white/10">
+                                📢 CÔNG BỐ
+                            </span>
                         )}
                         {autoGMState?.isPaused && (
-                            <span className="text-yellow-400/80 text-[10px] font-heading border border-yellow-500/30 px-1.5 py-0.5 rounded animate-mysticPulse">
+                            <span className="text-yellow-400 text-[10px] font-heading border border-yellow-500/40 px-2 py-0.5 rounded bg-yellow-950/40 animate-mysticPulse">
                                 ⏸ TẠM DỪNG
                             </span>
                         )}
                         {timeLeftStr ? (
-                            <span className="font-heading text-sm text-white/50">{timeLeftStr}</span>
+                            <span className="font-heading text-sm sm:text-base text-white/90 font-semibold px-2 py-0.5 rounded bg-black/40 border border-white/10">
+                                {timeLeftStr}
+                            </span>
                         ) : (
-                            <span className="font-heading text-[10px] text-white/30 tracking-widest animate-pulse">ĐANG ĐỢI...</span>
+                            <span className="font-heading text-[10px] text-white/40 tracking-widest animate-pulse">ĐANG ĐỢI...</span>
                         )}
                     </div>
 
                     {/* Công bố người chết */}
                     {phase === 'DAY_ANNOUNCE' && autoGMState?.dayActions?.deathMessages?.length > 0 && (
-                        <div className="mt-3 p-3" style={{ background: '#0a0a0a', border: '1px solid #222', borderRadius: '2px' }}>
-                            <p className="text-red-400/60 text-xs font-heading mb-2">ĐÊM QUA, NHỮNG NGƯỜI SAU ĐÃ CHẾT:</p>
+                        <div className="mt-2 p-2.5 rounded bg-red-950/30 border border-red-500/30 backdrop-blur-sm animate-modalPop">
+                            <p className="text-red-400 text-[11px] font-heading mb-1 tracking-wider uppercase">ĐÊM QUA, NHỮNG NGƯỜI SAU ĐÃ CHẾT:</p>
                             {autoGMState.dayActions.deathMessages.map((d, i) => (
-                                <p key={i} className="text-white/60 text-sm font-heading">
+                                <p key={i} className="text-white text-xs font-heading font-medium">
                                     💀 {d.playerName}
                                 </p>
                             ))}
                         </div>
                     )}
                     {phase === 'DAY_ANNOUNCE' && autoGMState?.dayActions?.deathMessages?.length === 0 && (
-                        <div className="mt-3 p-3" style={{ background: '#0a0a0a', border: '1px solid #222', borderRadius: '2px' }}>
-                            <p className="text-white/40 text-xs font-heading">Đêm qua không ai chết. 🌅</p>
+                        <div className="mt-2 p-2 rounded bg-emerald-950/20 border border-emerald-500/20 text-emerald-300 text-xs font-heading">
+                            Đêm qua bình yên, không ai chết. 🌅
                         </div>
                     )}
                 </div>
             )}
 
-            {/* Death overlay */}
+            {/* Death overlay - Cinematic Soul Mist */}
             {!currentPlayer.isAlive && !hideDeathOverlay && !(phase === 'DAY_HUNTER_CHECK' && currentTurnRole === 'Thợ săn' && autoGMState?.myMeta?.originalRole === 'Thợ săn') && (
-                <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center p-6 bg-black/90 backdrop-blur-md animate-fadeIn">
-                    <div className="text-red-500/30 text-6xl mb-4 animate-bloodPulse filter drop-shadow-[0_0_15px_rgba(225,29,72,0.4)]">☠</div>
-                    <h1 className="font-display text-2xl sm:text-3xl text-white tracking-[0.2em] mb-2 drop-shadow-[0_2px_10px_rgba(255,255,255,0.1)]">
+                <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-6 soul-mist-overlay animate-fadeIn">
+                    {/* Ghostly ambient runes */}
+                    <div className="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-600/30 via-purple-900/20 to-transparent"></div>
+                    
+                    <div className="relative mb-3 flex items-center justify-center">
+                        <div className="absolute w-24 h-24 rounded-full bg-red-600/20 filter blur-xl animate-pulse"></div>
+                        <div className="text-red-500/80 text-6xl sm:text-7xl animate-soulFlame">☠</div>
+                    </div>
+
+                    <h1 className="font-display text-3xl sm:text-4xl text-white tracking-[0.25em] mb-1 drop-shadow-[0_4px_20px_rgba(225,29,72,0.4)] text-center">
                         BẠN ĐÃ CHẾT
                     </h1>
-                    <div className="text-red-500/40 text-xs tracking-[0.4em] mt-2 font-heading">— LINH HỒN LÌA KHỎI XÁC —</div>
-                    <p className="text-white/50 text-xs mt-4 mb-8 text-center max-w-xs leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
-                        Bạn đã bị loại khỏi ván chơi hiện tại.<br/>Bạn có thể tiếp tục theo dõi diễn biến hoặc chờ ván mới.
+                    <div className="text-red-400/70 text-xs tracking-[0.4em] font-heading mt-1 mb-3 uppercase">— LINH HỒN LÌA KHỎI XÁC —</div>
+                    
+                    <p className="text-white/60 text-xs sm:text-sm text-center max-w-xs leading-relaxed mb-6" style={{ fontFamily: 'var(--font-body)' }}>
+                        Bạn đã bị loại khỏi ván đấu.<br/>Linh hồn của bạn có thể tự do theo dõi toàn bộ diễn biến cuộc chiến.
                     </p>
 
-                    <button 
-                        onClick={() => setHideDeathOverlay(true)}
-                        className="gothic-btn w-full max-w-xs py-3 text-xs tracking-widest uppercase hover:border-red-500/40"
-                    >
-                        TIẾP TỤC THEO DÕI / CHỜ GAME MỚI
-                    </button>
+                    <div className="w-full max-w-xs space-y-3 z-10">
+                        <button 
+                            onClick={() => setHideDeathOverlay(true)}
+                            className="gothic-btn gothic-btn-primary w-full py-3 text-xs tracking-widest uppercase !border-white/40 shadow-[0_0_20px_rgba(255,255,255,0.15)] flex items-center justify-center gap-2"
+                        >
+                            👁️ THEO DÕI DIỄN BIẾN (KHÁN GIẢ)
+                        </button>
+                        <button 
+                            onClick={handleLogout}
+                            className="gothic-btn w-full py-2.5 text-xs tracking-widest uppercase text-white/40 hover:text-white/80 !border-white/10"
+                        >
+                            RỜI KHỎI PHÒNG
+                        </button>
+                    </div>
                 </div>
             )}
 
@@ -330,25 +372,84 @@ export const AutoPlayerView = () => {
                         </p>
                     </div>
                 ) : (
-                    /* Phòng chờ */
-                    <div className="w-full flex flex-col items-center space-y-8">
-                        <div className="w-64 h-[22rem] flex flex-col items-center justify-center relative"
-                            style={{ border: '1px dashed #333', borderRadius: '4px', background: '#0A0A0A' }}>
-                            <div className="text-white/8 text-4xl mb-4 animate-float">☽</div>
-                            <span className="font-heading text-white/20 tracking-[0.2em] text-xs text-center px-4">
-                                CHỜ QUẢN TRÒ<br />PHÁT BÀI
+                    /* Bệ Thờ Cổ Tự (Arcane Altar) — Phòng chờ phát bài */
+                    <div className="w-full flex flex-col items-center space-y-6 my-auto">
+                        <div 
+                            className={`card-responsive arcane-altar-slot flex flex-col items-center justify-center relative p-6 cursor-pointer transition-all duration-500 ${
+                                currentPlayer?.isReady 
+                                    ? 'shadow-[0_0_35px_rgba(52,211,153,0.25)] border-emerald-500/40' 
+                                    : 'border-white/15'
+                            }`}
+                            onClick={() => socket.emit('setStatus', !currentPlayer?.isReady)}
+                        >
+                            {/* Ambient glowing ring */}
+                            <div className={`absolute w-36 h-36 rounded-full border border-dashed transition-all duration-700 pointer-events-none ${
+                                currentPlayer?.isReady 
+                                    ? 'border-emerald-500/40 animate-runeRotate scale-110' 
+                                    : 'border-white/10 animate-runeRotate'
+                            }`}></div>
+
+                            {/* Corner gothic runes */}
+                            <span className="absolute top-3 left-4 text-white/20 text-xs pointer-events-none">✦</span>
+                            <span className="absolute top-3 right-4 text-white/20 text-xs pointer-events-none">✦</span>
+                            <span className="absolute bottom-3 left-4 text-white/20 text-xs pointer-events-none">✦</span>
+                            <span className="absolute bottom-3 right-4 text-white/20 text-xs pointer-events-none">✦</span>
+
+                            {/* Central Moon Symbol */}
+                            <div className={`text-5xl mb-3 transition-all duration-500 ${
+                                currentPlayer?.isReady 
+                                    ? 'text-emerald-300 drop-shadow-[0_0_20px_rgba(52,211,153,0.6)] animate-pulse' 
+                                    : 'text-white/20 animate-float'
+                            }`}>
+                                ☽
+                            </div>
+
+                            <span className="font-heading text-sm text-white/80 tracking-[0.25em] text-center uppercase font-medium">
+                                {currentPlayer?.isReady ? 'ĐÃ SẴN SÀNG' : 'CHỜ PHÁT BÀI'}
                             </span>
-                            <div className="text-white/10 text-xs tracking-[0.4em] mt-4">· · ·</div>
+
+                            <div className="text-[11px] font-heading tracking-widest text-center mt-2">
+                                {currentPlayer?.isReady ? (
+                                    <span className="text-emerald-400 font-semibold flex items-center justify-center gap-1.5 animate-pulse">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                        ĐÃ KẾT NỐI TÂM LINH
+                                    </span>
+                                ) : (
+                                    <span className="text-white/40">
+                                        Chạm để báo Sẵn sàng
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Ready counter indicator */}
+                            <div className="absolute bottom-4 inset-x-0 text-center">
+                                <span className="text-[10px] font-heading tracking-wider px-2.5 py-1 rounded-full bg-black/60 border border-white/10 text-white/50">
+                                    {gameState.players.filter(p => !p.isAdmin && p.isReady).length}/{gameState.players.filter(p => !p.isAdmin).length} NGƯỜI SẴN SÀNG
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex gap-3">
-                            <button onClick={() => socket.emit('setStatus', true)}
-                                className={`gothic-btn ${currentPlayer?.isReady ? 'gothic-btn-primary !border-white/60' : ''}`}
-                                style={currentPlayer?.isReady ? { boxShadow: '0 0 15px rgba(255,255,255,0.08)' } : {}}>
-                                ĐÃ SẴN SÀNG
+
+                        {/* Ready Action Buttons */}
+                        <div className="flex gap-3 w-full max-w-xs">
+                            <button 
+                                onClick={() => socket.emit('setStatus', true)}
+                                className={`gothic-btn flex-1 py-3 text-xs tracking-wider transition-all duration-300 ${
+                                    currentPlayer?.isReady 
+                                        ? 'gothic-btn-primary !border-emerald-500/60 shadow-[0_0_20px_rgba(52,211,153,0.25)] text-emerald-200' 
+                                        : 'text-white/60 hover:text-white'
+                                }`}
+                            >
+                                SẴN SÀNG
                             </button>
-                            <button onClick={() => socket.emit('setStatus', false)}
-                                className={`gothic-btn ${!currentPlayer?.isReady ? 'gothic-btn-danger !border-white/40' : ''}`}>
-                                CHƯA SẴN SÀNG
+                            <button 
+                                onClick={() => socket.emit('setStatus', false)}
+                                className={`gothic-btn flex-1 py-3 text-xs tracking-wider transition-all duration-300 ${
+                                    !currentPlayer?.isReady 
+                                        ? 'gothic-btn-danger !border-red-500/50 shadow-[0_0_15px_rgba(225,29,72,0.2)] text-red-200' 
+                                        : 'text-white/40 hover:text-white'
+                                }`}
+                            >
+                                CHƯA
                             </button>
                         </div>
                     </div>

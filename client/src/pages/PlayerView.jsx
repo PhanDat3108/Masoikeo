@@ -11,6 +11,7 @@ export const PlayerView = () => {
     const clearSession = useGameStore(state => state.clearSession);
     const countdown = useGameStore(state => state.countdown);
     const [isFlipped, setIsFlipped] = useState(false);
+    const [hideDeathOverlay, setHideDeathOverlay] = useState(false);
 
     const [localVoteId, setLocalVoteId] = useState(null);
     const [hasConfirmedVote, setHasConfirmedVote] = useState(false);
@@ -22,6 +23,7 @@ export const PlayerView = () => {
     React.useEffect(() => {
         if (countdown !== null || !hasRole) {
             setIsFlipped(false);
+            setHideDeathOverlay(false);
         }
     }, [countdown, hasRole]);
 
@@ -59,41 +61,74 @@ export const PlayerView = () => {
         );
     }
 
-
     return (
-        <div className="flex flex-col items-center justify-center h-full p-4 relative w-full max-w-md mx-auto animate-fadeIn">
-            {/* Header */}
-            <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
-                <div className="font-heading text-white/60 tracking-[0.15em] text-sm">
-                    <span className="text-white/30">✦</span>
-                    <span className="ml-2">{currentPlayer.name}</span>
+        <div className="flex flex-col items-center justify-between safe-dvh p-3 sm:p-4 relative w-full max-w-md mx-auto animate-fadeIn overflow-x-hidden">
+            {/* Header Bar - Mobile Optimized */}
+            <header className="w-full flex justify-between items-center z-20 py-2 px-3 rounded-full bg-black/60 backdrop-blur-md border border-white/10 shadow-lg">
+                <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${currentPlayer.isAlive ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse'}`}></span>
+                    <span className="font-heading text-white/90 text-xs sm:text-sm tracking-wider font-semibold truncate max-w-[140px] sm:max-w-[180px]">
+                        {currentPlayer.name}
+                    </span>
+                    {!currentPlayer.isAlive && (
+                        <span className="text-[10px] font-heading px-1.5 py-0.5 rounded bg-red-950/80 border border-red-500/30 text-red-300">
+                            VONG HỒN
+                        </span>
+                    )}
                 </div>
-                <button
-                    onClick={handleLogout}
-                    className="gothic-btn p-2"
-                    title="Đăng xuất"
-                    style={{ padding: '0.4rem 0.6rem' }}
-                >
-                    <LogOut size={16} />
-                </button>
-            </div>
+                <div className="flex items-center gap-2">
+                    {!currentPlayer.isAlive && hideDeathOverlay && (
+                        <button 
+                            onClick={() => setHideDeathOverlay(false)} 
+                            className="text-[10px] font-heading px-2 py-1 rounded bg-white/5 border border-white/10 text-white/60 hover:text-white"
+                        >
+                            ☠ TỬ SĨ
+                        </button>
+                    )}
+                    <button
+                        onClick={handleLogout}
+                        className="p-1.5 text-white/40 hover:text-rose-400 hover:bg-white/5 rounded-full transition-colors"
+                        title="Đăng xuất"
+                    >
+                        <LogOut size={16} />
+                    </button>
+                </div>
+            </header>
 
             {/* Death overlay */}
-            {!currentPlayer.isAlive && (
-                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center"
-                    style={{ background: 'rgba(0,0,0,0.92)' }}>
-                    <div className="text-white/10 text-6xl mb-4">☠</div>
-                    <h1 className="font-display text-3xl text-white/60 animate-mysticPulse"
-                        style={{ textShadow: '0 0 30px rgba(255,255,255,0.1)' }}>
+            {!currentPlayer.isAlive && !hideDeathOverlay && (
+                <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-6 soul-mist-overlay animate-fadeIn">
+                    <div className="relative mb-3 flex items-center justify-center">
+                        <div className="absolute w-24 h-24 rounded-full bg-red-600/20 filter blur-xl animate-pulse"></div>
+                        <div className="text-red-500/80 text-6xl sm:text-7xl animate-soulFlame">☠</div>
+                    </div>
+                    <h1 className="font-display text-3xl sm:text-4xl text-white tracking-[0.25em] mb-1 drop-shadow-[0_4px_20px_rgba(225,29,72,0.4)] text-center">
                         BẠN ĐÃ CHẾT
                     </h1>
-                    <div className="text-white/15 text-xs tracking-[0.4em] mt-3 font-heading">— ✦ —</div>
+                    <div className="text-red-400/70 text-xs tracking-[0.4em] font-heading mt-1 mb-3 uppercase">— LINH HỒN LÌA KHỎI XÁC —</div>
+                    <p className="text-white/60 text-xs sm:text-sm text-center max-w-xs leading-relaxed mb-6" style={{ fontFamily: 'var(--font-body)' }}>
+                        Bạn đã bị loại khỏi ván đấu.<br/>Bạn có thể tiếp tục quan sát diễn biến hoặc rời phòng.
+                    </p>
+                    <div className="w-full max-w-xs space-y-3 z-10">
+                        <button 
+                            onClick={() => setHideDeathOverlay(true)}
+                            className="gothic-btn gothic-btn-primary w-full py-3 text-xs tracking-widest uppercase !border-white/40 shadow-[0_0_20px_rgba(255,255,255,0.15)]"
+                        >
+                            👁️ THEO DÕI DIỄN BIẾN (KHÁN GIẢ)
+                        </button>
+                        <button 
+                            onClick={handleLogout}
+                            className="gothic-btn w-full py-2.5 text-xs tracking-widest uppercase text-white/40 hover:text-white/80 !border-white/10"
+                        >
+                            RỜI KHỎI PHÒNG
+                        </button>
+                    </div>
                 </div>
             )}
 
-            <div className="mt-16 flex-1 flex flex-col items-center justify-center w-full">
+            <div className="my-auto flex-1 flex flex-col items-center justify-center w-full">
                 {hasRole ? (
-                    <div className="w-full flex flex-col items-center space-y-6">
+                    <div className="w-full flex flex-col items-center space-y-4">
                         <PlayerCard
                             role={currentPlayer.role}
                             isFlipped={isFlipped}
@@ -111,38 +146,79 @@ export const PlayerView = () => {
                         </p>
                     </div>
                 ) : (
-                    <div className="w-full flex flex-col items-center space-y-8">
-                        {/* Waiting card placeholder */}
-                        <div className="w-64 h-[22rem] flex flex-col items-center justify-center relative"
-                            style={{ border: '1px dashed #333', borderRadius: '4px', background: '#0A0A0A' }}>
+                    /* Bệ Thờ Cổ Tự (Arcane Altar) */
+                    <div className="w-full flex flex-col items-center space-y-6 my-auto">
+                        <div 
+                            className={`card-responsive arcane-altar-slot flex flex-col items-center justify-center relative p-6 cursor-pointer transition-all duration-500 ${
+                                currentPlayer?.isReady 
+                                    ? 'shadow-[0_0_35px_rgba(52,211,153,0.25)] border-emerald-500/40' 
+                                    : 'border-white/15'
+                            }`}
+                            onClick={() => handleReady(!currentPlayer.isReady)}
+                        >
+                            <div className={`absolute w-36 h-36 rounded-full border border-dashed transition-all duration-700 pointer-events-none ${
+                                currentPlayer?.isReady 
+                                    ? 'border-emerald-500/40 animate-runeRotate scale-110' 
+                                    : 'border-white/10 animate-runeRotate'
+                            }`}></div>
 
-                            <div className="text-white/8 text-4xl mb-4 animate-float">☽</div>
-                            <span className="font-heading text-white/20 tracking-[0.2em] text-xs text-center px-4">
-                                CHỜ QUẢN TRÒ<br />PHÁT BÀI
+                            <span className="absolute top-3 left-4 text-white/20 text-xs pointer-events-none">✦</span>
+                            <span className="absolute top-3 right-4 text-white/20 text-xs pointer-events-none">✦</span>
+                            <span className="absolute bottom-3 left-4 text-white/20 text-xs pointer-events-none">✦</span>
+                            <span className="absolute bottom-3 right-4 text-white/20 text-xs pointer-events-none">✦</span>
+
+                            <div className={`text-5xl mb-3 transition-all duration-500 ${
+                                currentPlayer?.isReady 
+                                    ? 'text-emerald-300 drop-shadow-[0_0_20px_rgba(52,211,153,0.6)] animate-pulse' 
+                                    : 'text-white/20 animate-float'
+                            }`}>
+                                ☽
+                            </div>
+
+                            <span className="font-heading text-sm text-white/80 tracking-[0.25em] text-center uppercase font-medium">
+                                {currentPlayer?.isReady ? 'ĐÃ SẴN SÀNG' : 'CHỜ PHÁT BÀI'}
                             </span>
-                            <div className="text-white/10 text-xs tracking-[0.4em] mt-4">· · ·</div>
+
+                            <div className="text-[11px] font-heading tracking-widest text-center mt-2">
+                                {currentPlayer?.isReady ? (
+                                    <span className="text-emerald-400 font-semibold flex items-center justify-center gap-1.5 animate-pulse">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                        ĐÃ KẾT NỐI TÂM LINH
+                                    </span>
+                                ) : (
+                                    <span className="text-white/40">
+                                        Chạm để báo Sẵn sàng
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="absolute bottom-4 inset-x-0 text-center">
+                                <span className="text-[10px] font-heading tracking-wider px-2.5 py-1 rounded-full bg-black/60 border border-white/10 text-white/50">
+                                    {gameState.players.filter(p => !p.isAdmin && p.isReady).length}/{gameState.players.filter(p => !p.isAdmin).length} NGƯỜI SẴN SÀNG
+                                </span>
+                            </div>
                         </div>
 
-                        {/* Ready buttons */}
-                        <div className="flex gap-3">
+                        <div className="flex gap-3 w-full max-w-xs">
                             <button
                                 onClick={() => handleReady(true)}
-                                className={`gothic-btn ${currentPlayer.isReady
-                                    ? 'gothic-btn-primary !border-white/60'
-                                    : ''
-                                    }`}
-                                style={currentPlayer.isReady ? { boxShadow: '0 0 15px rgba(255,255,255,0.08)' } : {}}
+                                className={`gothic-btn flex-1 py-3 text-xs tracking-wider transition-all duration-300 ${
+                                    currentPlayer.isReady
+                                        ? 'gothic-btn-primary !border-emerald-500/60 shadow-[0_0_20px_rgba(52,211,153,0.25)] text-emerald-200'
+                                        : 'text-white/60 hover:text-white'
+                                }`}
                             >
-                                ĐÃ SẴN SÀNG
+                                SẴN SÀNG
                             </button>
                             <button
                                 onClick={() => handleReady(false)}
-                                className={`gothic-btn ${!currentPlayer.isReady
-                                    ? 'gothic-btn-danger !border-white/40'
-                                    : ''
-                                    }`}
+                                className={`gothic-btn flex-1 py-3 text-xs tracking-wider transition-all duration-300 ${
+                                    !currentPlayer.isReady
+                                        ? 'gothic-btn-danger !border-red-500/50 shadow-[0_0_15px_rgba(225,29,72,0.2)] text-red-200'
+                                        : 'text-white/40 hover:text-white'
+                                }`}
                             >
-                                CHƯA SẴN SÀNG
+                                CHƯA
                             </button>
                         </div>
                     </div>
