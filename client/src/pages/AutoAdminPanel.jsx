@@ -366,12 +366,12 @@ export const AutoAdminPanel = () => {
 
             {/* Confirm Modal */}
             {confirmAction && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-fadeIn">
-                    <div className="gothic-card text-center flex flex-col items-center justify-center p-6 max-w-xs w-11/12 border border-white/20 shadow-2xl">
-                        <div className="text-white/30 text-[10px] tracking-[0.5em] mb-4">— ✦ —</div>
-                        <h3 className="font-heading text-sm text-white/80 mb-6 leading-relaxed px-2">{confirmAction.message}</h3>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md animate-fadeIn p-4">
+                    <div className="gothic-card text-center flex flex-col items-center justify-center p-6 max-w-xs w-full animate-modalPop border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.9)]">
+                        <div className="text-white/30 text-[10px] tracking-[0.5em] mb-3 font-heading">— XÁC NHẬN —</div>
+                        <h3 className="font-heading text-sm text-white/90 mb-6 leading-relaxed px-2">{confirmAction.message}</h3>
                         <div className="flex gap-3 w-full">
-                            <button onClick={() => setConfirmAction(null)} className="gothic-btn flex-1 py-2 text-xs text-white/50 border-white/20 hover:border-white/40">HUỶ</button>
+                            <button onClick={() => setConfirmAction(null)} className="gothic-btn flex-1 py-2 text-xs text-white/60 hover:text-white border-white/20">HUỶ</button>
                             <button onClick={() => { confirmAction.onConfirm(); setConfirmAction(null); }} className="gothic-btn gothic-btn-danger flex-1 py-2 text-xs">XÁC NHẬN</button>
                         </div>
                     </div>

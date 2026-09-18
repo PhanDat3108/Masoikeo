@@ -459,20 +459,20 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
 
 /** Popup wrapper */
 const PopupWrapper = ({ onClose, title, icon, children }) => (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-fadeIn p-4">
-        <div className="gothic-card w-full max-w-sm flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/85 backdrop-blur-md animate-fadeIn p-4">
+        <div className="gothic-card animate-modalPop w-full max-w-sm flex flex-col max-h-[85vh] shadow-[0_0_50px_rgba(0,0,0,0.9)]">
             {/* Header */}
-            <div className="flex justify-between items-center mb-4 pb-2" style={{ borderBottom: '1px solid #222' }}>
+            <div className="flex justify-between items-center mb-4 pb-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 <div className="flex items-center gap-2">
                     {icon && <span className="text-white/40">{icon}</span>}
-                    <h3 className="font-heading text-sm text-white/70 tracking-wider">{title}</h3>
+                    <h3 className="font-heading text-sm text-white/85 tracking-wider">{title}</h3>
                 </div>
-                <button onClick={onClose} className="text-white/30 hover:text-white/60 transition-colors">
+                <button onClick={onClose} className="text-white/40 hover:text-white transition-colors p-1">
                     <X size={16} />
                 </button>
             </div>
             {/* Content */}
-            <div className="overflow-y-auto flex-1 pr-1">
+            <div className="overflow-y-auto flex-1 pr-1 custom-scrollbar">
                 {children}
             </div>
         </div>
@@ -489,16 +489,16 @@ const PlayerList = ({ players, selectedIds = [], onSelect, myId }) => (
                 <button
                     key={p.id}
                     onClick={() => onSelect(p.id)}
-                    className={`w-full text-left p-2.5 px-3 flex justify-between items-center transition-all ${isSelected
-                        ? 'bg-white/10 border border-white/40 text-white'
-                        : 'bg-[#111] border border-[#1a1a1a] text-white/60 hover:bg-[#1a1a1a] hover:text-white/90'
+                    className={`w-full text-left p-2.5 px-3 flex justify-between items-center transition-all duration-200 ${isSelected
+                        ? 'bg-red-950/30 border border-red-500/50 text-white shadow-[0_0_15px_rgba(225,29,72,0.2)]'
+                        : 'bg-[#121218] border border-white/5 text-white/70 hover:bg-[#1a1a24] hover:border-white/20 hover:text-white'
                         }`}
                     style={{ borderRadius: '2px' }}
                 >
                     <span className="font-heading text-sm tracking-wider">
                         {p.name} {isMe && <span className="text-white/30 text-[10px]">(BẠN)</span>}
                     </span>
-                    {isSelected && <span className="text-[10px] font-heading text-white/60">✦ CHỌN</span>}
+                    {isSelected && <span className="text-[10px] font-heading text-red-400">✦ ĐÃ CHỌN</span>}
                 </button>
             );
         })}
@@ -516,13 +516,13 @@ export const SeerResultPopup = ({ result, onClose }) => {
     if (!result || result.type !== 'seer_result') return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-fadeIn">
-            <div className="gothic-card text-center p-8 max-w-xs w-11/12">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md animate-fadeIn p-4">
+            <div className="gothic-card animate-modalPop text-center p-8 max-w-xs w-11/12 shadow-[0_0_50px_rgba(0,0,0,0.9)]">
                 <div className="text-white/30 text-xs tracking-[0.5em] mb-4">— ✦ KẾT QUẢ SOI ✦ —</div>
-                <p className="text-white/60 text-sm mb-2 font-heading tracking-wider">{result.targetName}</p>
-                <div className={`font-display text-3xl mb-6 ${result.result === 'WOLF' ? 'text-red-500/80' : 'text-white/70'}`}
-                    style={{ textShadow: `0 0 20px ${result.result === 'WOLF' ? 'rgba(255,0,0,0.3)' : 'rgba(255,255,255,0.1)'}` }}>
-                    {result.result === 'WOLF' ? ' SÓI' : ' DÂN'}
+                <p className="text-white/70 text-sm mb-2 font-heading tracking-wider">{result.targetName}</p>
+                <div className={`font-display text-3xl mb-6 ${result.result === 'WOLF' ? 'text-red-500/90' : 'text-emerald-400/90'}`}
+                    style={{ textShadow: `0 0 25px ${result.result === 'WOLF' ? 'rgba(239,68,68,0.4)' : 'rgba(52,211,153,0.3)'}` }}>
+                    {result.result === 'WOLF' ? '🐺 PHE SÓI' : '🌾 PHE DÂN'}
                 </div>
                 <button onClick={onClose} className="gothic-btn gothic-btn-primary w-full py-2.5">
                     ĐÃ HIỂU

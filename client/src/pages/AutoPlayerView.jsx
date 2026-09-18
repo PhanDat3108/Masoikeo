@@ -216,21 +216,19 @@ export const AutoPlayerView = () => {
 
             {/* Death overlay */}
             {!currentPlayer.isAlive && !hideDeathOverlay && !(phase === 'DAY_HUNTER_CHECK' && currentTurnRole === 'Thợ săn' && autoGMState?.myMeta?.originalRole === 'Thợ săn') && (
-                <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center p-4 animate-fadeIn"
-                    style={{ background: 'rgba(0,0,0,0.92)' }}>
-                    <div className="text-white/10 text-6xl mb-4 animate-pulse">☠</div>
-                    <h1 className="font-display text-3xl text-white/60 mb-2"
-                        style={{ textShadow: '0 0 30px rgba(255,255,255,0.1)' }}>
+                <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center p-6 bg-black/90 backdrop-blur-md animate-fadeIn">
+                    <div className="text-red-500/30 text-6xl mb-4 animate-bloodPulse filter drop-shadow-[0_0_15px_rgba(225,29,72,0.4)]">☠</div>
+                    <h1 className="font-display text-2xl sm:text-3xl text-white tracking-[0.2em] mb-2 drop-shadow-[0_2px_10px_rgba(255,255,255,0.1)]">
                         BẠN ĐÃ CHẾT
                     </h1>
-                    <div className="text-white/15 text-xs tracking-[0.4em] mt-3 font-heading">— ✦ —</div>
-                    <p className="text-white/40 text-xs mt-4 mb-8 text-center" style={{ fontFamily: 'var(--font-body)' }}>
-                        Bạn đã bị loại khỏi ván chơi hiện tại.<br/>Bạn có thể tiếp tục theo dõi diễn biến hoặc thoát ra màn hình chờ.
+                    <div className="text-red-500/40 text-xs tracking-[0.4em] mt-2 font-heading">— LINH HỒN LÌA KHỎI XÁC —</div>
+                    <p className="text-white/50 text-xs mt-4 mb-8 text-center max-w-xs leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
+                        Bạn đã bị loại khỏi ván chơi hiện tại.<br/>Bạn có thể tiếp tục theo dõi diễn biến hoặc chờ ván mới.
                     </p>
 
                     <button 
                         onClick={() => setHideDeathOverlay(true)}
-                        className="gothic-btn w-full max-w-xs py-3 text-sm"
+                        className="gothic-btn w-full max-w-xs py-3 text-xs tracking-widest uppercase hover:border-red-500/40"
                     >
                         TIẾP TỤC THEO DÕI / CHỜ GAME MỚI
                     </button>
@@ -239,25 +237,24 @@ export const AutoPlayerView = () => {
 
             {/* Lover Info Popup */}
             {autoGMState?.loverInfo && !hasSeenLoverInfo && currentPlayer.isAlive && (
-                <div className="absolute inset-0 z-[60] flex items-center justify-center p-4 animate-fadeIn" style={{ background: 'rgba(0,0,0,0.9)' }}>
-                    <div className="w-full max-w-sm p-6 flex flex-col items-center"
-                         style={{ background: '#110a0a', border: '1px solid #422', borderRadius: '2px', boxShadow: '0 0 40px rgba(255,100,100,0.1)' }}>
-                        <div className="text-4xl mb-4 animate-pulse">💕</div>
-                        <h3 className="font-display text-xl text-red-200/80 mb-2 tracking-widest text-center">BẠN ĐÃ ĐƯỢC GHÉP ĐÔI</h3>
-                        <p className="text-white/40 text-xs font-heading mb-6 text-center">Người yêu của bạn là:</p>
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+                    <div className="gothic-card w-full max-w-sm p-6 flex flex-col items-center animate-modalPop border border-rose-500/30 shadow-[0_0_40px_rgba(244,63,94,0.15)]">
+                        <div className="text-4xl mb-3 animate-pulse">💕</div>
+                        <h3 className="font-display text-lg sm:text-xl text-rose-300 mb-1 tracking-widest text-center">BẠN ĐÃ ĐƯỢC GHÉP ĐÔI</h3>
+                        <p className="text-white/40 text-xs font-heading mb-5 text-center tracking-wider">NGƯỜI YÊU CỦA BẠN LÀ</p>
                         
-                        <div className="text-center mb-8 w-full p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                            <div className="text-xl font-display text-white/90 tracking-widest mb-2">
+                        <div className="text-center mb-6 w-full p-4 rounded bg-rose-950/20 border border-rose-500/20">
+                            <div className="text-xl font-display text-white tracking-widest mb-1.5 drop-shadow-sm">
                                 {autoGMState.loverInfo.name}
                             </div>
-                            <div className="text-xs font-heading text-red-300/60">
+                            <div className="text-xs font-heading text-rose-400 font-semibold uppercase tracking-wider">
                                 Vai trò: {autoGMState.loverInfo.role}
                             </div>
                         </div>
 
                         <button 
                             onClick={() => setHasSeenLoverInfo(true)}
-                            className="gothic-btn w-full py-3 text-sm"
+                            className="gothic-btn w-full py-3 text-xs tracking-wider"
                         >
                             ĐÃ RÕ VÀ ẨN ĐI
                         </button>
@@ -360,25 +357,25 @@ export const AutoPlayerView = () => {
 
             {/* ===== VOTE BAN NGÀY ===== */}
             {phase === 'DAY_VOTE' && currentPlayer.isAlive && !hasVoted && (
-                <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-fadeIn p-4">
-                    <div className="gothic-card w-full max-w-sm flex flex-col max-h-[85vh]">
-                        <div className="text-white/30 text-[10px] tracking-[0.5em] mb-3 text-center">
+                <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/85 backdrop-blur-md animate-fadeIn p-4">
+                    <div className="gothic-card w-full max-w-sm flex flex-col max-h-[85vh] animate-modalPop border border-red-500/20 shadow-[0_20px_50px_rgba(0,0,0,0.85)] p-5">
+                        <div className="text-white/30 text-[10px] tracking-[0.4em] mb-2 text-center uppercase font-heading">
                             {autoGMState?.dayActions?.isRevote ? '— BỎ PHIẾU LẠI (HÒA PHIẾU) —' : '— BỎ PHIẾU BAN NGÀY —'}
                         </div>
-                        <h3 className="font-heading text-lg text-red-500/90 mb-3 text-center drop-shadow-md">
+                        <h3 className="font-heading text-base sm:text-lg text-red-400 mb-4 text-center tracking-wider drop-shadow-[0_2px_8px_rgba(239,68,68,0.2)]">
                             {autoGMState?.dayActions?.isRevote ? 'CHỌN 1 TRONG CÁC ỨNG VIÊN HÒA' : 'CHỌN NGƯỜI BỊ TREO CỔ'}
                         </h3>
                         
                         {autoGMState?.dayActions?.isRevote && autoGMState?.dayActions?.revoteTargets?.includes(socket.id) ? (
-                            <div className="p-4 my-6 text-center border border-yellow-500/20 bg-yellow-500/5 rounded">
-                                <p className="text-yellow-200/80 text-xs font-heading mb-2">BẠN ĐANG TRONG DANH SÁCH BỊ HÒA PHIẾU</p>
-                                <p className="text-white/40 text-xs" style={{ fontFamily: 'var(--font-body)' }}>
+                            <div className="p-4 my-4 text-center border border-amber-500/30 bg-amber-950/20 rounded">
+                                <p className="text-amber-300 text-xs font-heading mb-2">BẠN ĐANG TRONG DANH SÁCH BỊ HÒA PHIẾU</p>
+                                <p className="text-white/50 text-xs leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
                                     Bạn không được quyền tham gia bỏ phiếu trong lượt biểu quyết lại này.
                                 </p>
                             </div>
                         ) : (
                             <>
-                                <div className="overflow-y-auto pr-1 flex-1 space-y-2 mb-4">
+                                <div className="overflow-y-auto pr-1 flex-1 space-y-2 mb-4 custom-scrollbar">
                                     {gameState.players
                                         .filter(p => {
                                             if (!p.isAlive || p.isAdmin || p.id === socket.id) return false;
@@ -393,17 +390,20 @@ export const AutoPlayerView = () => {
                                                 <button 
                                                     key={p.id}
                                                     onClick={() => setLocalVoteId(p.id)}
-                                                    className={`w-full text-left p-3 flex justify-between items-center transition-all ${isSelected ? 'bg-red-900/30 border border-red-500/50 text-white' : 'bg-[#111] border border-[#222] text-white/60 hover:bg-[#1a1a1a] hover:text-white/90'}`}
-                                                    style={{ borderRadius: '2px' }}
+                                                    className={`w-full text-left p-3 rounded flex justify-between items-center transition-all duration-200 ${
+                                                        isSelected 
+                                                            ? 'bg-red-950/40 border border-red-500/60 text-white shadow-[0_0_15px_rgba(225,29,72,0.2)] scale-[1.01]' 
+                                                            : 'bg-white/[0.03] border border-white/5 text-white/70 hover:bg-white/[0.06] hover:text-white hover:border-white/10'
+                                                    }`}
                                                 >
                                                     <span className="font-heading text-sm">{p.name}</span>
-                                                    {isSelected && <span className="text-[10px] text-red-400 font-heading">ĐANG CHỌN</span>}
+                                                    {isSelected && <span className="text-[10px] text-red-400 font-heading tracking-wider px-2 py-0.5 rounded bg-red-950/60 border border-red-500/30">MỤC TIÊU</span>}
                                                 </button>
                                             );
                                         })}
                                 </div>
 
-                                <div className="flex gap-2 mb-2">
+                                <div className="flex gap-2 mb-1">
                                     <button 
                                         onClick={() => socket.emit('autoGM:dayVote', 'skip')}
                                         className="gothic-btn flex-1 py-2.5 text-xs text-white/50 hover:text-white border border-white/10"
@@ -417,7 +417,7 @@ export const AutoPlayerView = () => {
                                             }
                                         }}
                                         disabled={!localVoteId}
-                                        className="gothic-btn gothic-btn-primary flex-1 py-2.5 text-xs"
+                                        className={`gothic-btn flex-1 py-2.5 text-xs ${localVoteId ? 'gothic-btn-primary' : 'opacity-40 cursor-not-allowed'}`}
                                     >
                                         CHỐT PHIẾU
                                     </button>
@@ -466,12 +466,12 @@ export const AutoPlayerView = () => {
 
             {/* Confirm Modal */}
             {confirmAction && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-fadeIn">
-                    <div className="gothic-card text-center flex flex-col items-center justify-center p-6 max-w-xs w-11/12 border border-white/20 shadow-2xl">
-                        <div className="text-white/30 text-[10px] tracking-[0.5em] mb-4">— ✦ —</div>
-                        <h3 className="font-heading text-sm text-white/80 mb-6 leading-relaxed px-2">{confirmAction.message}</h3>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md animate-fadeIn p-4">
+                    <div className="gothic-card text-center flex flex-col items-center justify-center p-6 max-w-xs w-full animate-modalPop border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.9)]">
+                        <div className="text-white/30 text-[10px] tracking-[0.5em] mb-3 font-heading">— XÁC NHẬN —</div>
+                        <h3 className="font-heading text-sm text-white/90 mb-6 leading-relaxed px-2">{confirmAction.message}</h3>
                         <div className="flex gap-3 w-full">
-                            <button onClick={() => setConfirmAction(null)} className="gothic-btn flex-1 py-2 text-xs text-white/50 border-white/20 hover:border-white/40">HUỶ</button>
+                            <button onClick={() => setConfirmAction(null)} className="gothic-btn flex-1 py-2 text-xs text-white/60 hover:text-white border-white/20">HUỶ</button>
                             <button onClick={() => { confirmAction.onConfirm(); setConfirmAction(null); }} className="gothic-btn gothic-btn-danger flex-1 py-2 text-xs">XÁC NHẬN</button>
                         </div>
                     </div>
@@ -503,32 +503,40 @@ const HunterShotPopup = ({ players, myId }) => {
     const alivePlayers = players.filter(p => !p.isAdmin && p.isAlive && p.id !== myId);
 
     return (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-fadeIn p-4">
-            <div className="gothic-card w-full max-w-sm flex flex-col max-h-[85vh]">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/85 backdrop-blur-md animate-fadeIn p-4">
+            <div className="gothic-card w-full max-w-sm flex flex-col max-h-[85vh] animate-modalPop border border-red-500/30 shadow-[0_20px_50px_rgba(0,0,0,0.9)] p-5">
                 <div className="text-center mb-4">
-                    <div className="text-white/30 text-xs tracking-[0.5em] mb-2">— ✦ —</div>
-                    <h3 className="font-heading text-lg text-red-400/80 tracking-wider">BẠN ĐÃ BỊ TREO CỔ!</h3>
-                    <p className="text-white/40 text-xs mt-2" style={{ fontFamily: 'var(--font-body)' }}>
-                        Là Thợ săn, bạn được chọn 1 người để bắn theo.
+                    <div className="text-red-500/50 text-xs tracking-[0.5em] mb-1.5 font-heading">— VIÊN ĐẠN CUỐI CÙNG —</div>
+                    <h3 className="font-heading text-lg text-white tracking-wider">BẠN ĐÃ BỊ TREO CỔ!</h3>
+                    <p className="text-white/50 text-xs mt-1.5 leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
+                        Là Thợ săn, hãy chọn 1 người để kéo theo xuống mồ.
                     </p>
                 </div>
-                <div className="overflow-y-auto flex-1 space-y-1.5 mb-4 pr-1">
-                    {alivePlayers.map(p => (
-                        <button key={p.id} onClick={() => setTargetId(p.id)}
-                            className={`w-full text-left p-2.5 px-3 flex justify-between items-center transition-all ${
-                                targetId === p.id ? 'bg-red-900/30 border border-red-500/50 text-white' : 'bg-[#111] border border-[#1a1a1a] text-white/60 hover:text-white/90'
-                            }`} style={{ borderRadius: '2px' }}>
-                            <span className="font-heading text-sm">{p.name}</span>
-                            {targetId === p.id && <span className="text-[10px] text-red-400 font-heading">MỤC TIÊU</span>}
-                        </button>
-                    ))}
+                <div className="overflow-y-auto flex-1 space-y-2 mb-4 pr-1 custom-scrollbar">
+                    {alivePlayers.map(p => {
+                        const isSelected = targetId === p.id;
+                        return (
+                            <button 
+                                key={p.id} 
+                                onClick={() => setTargetId(p.id)}
+                                className={`w-full text-left p-3 rounded flex justify-between items-center transition-all duration-200 ${
+                                    isSelected 
+                                        ? 'bg-red-950/50 border border-red-500/60 text-white shadow-[0_0_15px_rgba(225,29,72,0.2)] scale-[1.01]' 
+                                        : 'bg-white/[0.03] border border-white/5 text-white/70 hover:bg-white/[0.06] hover:text-white'
+                                }`}
+                            >
+                                <span className="font-heading text-sm">{p.name}</span>
+                                {isSelected && <span className="text-[10px] text-red-400 font-heading px-2 py-0.5 rounded bg-red-950/60 border border-red-500/30">MỤC TIÊU</span>}
+                            </button>
+                        );
+                    })}
                 </div>
                 <button
                     onClick={() => { if (targetId) socket.emit('autoGM:hunterShot', targetId); }}
                     disabled={!targetId}
-                    className="gothic-btn gothic-btn-primary w-full py-3"
+                    className={`gothic-btn w-full py-3 text-xs tracking-wider ${targetId ? 'gothic-btn-danger' : 'opacity-40 cursor-not-allowed'}`}
                 >
-                    BẮN
+                    BẮN NGAY
                 </button>
             </div>
         </div>

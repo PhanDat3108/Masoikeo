@@ -9,18 +9,19 @@
 @theme {
   /* Animations */
   --animate-mysticPulse: mysticPulse 4s ease-in-out infinite;
-  --animate-fadeIn: fadeIn 0.8s ease-out forwards;
+  --animate-fadeIn: fadeIn 0.5s ease-out forwards;
+  --animate-modalPop: modalPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-scaleUp: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --animate-slowGlow: slowGlow 3s ease-in-out infinite alternate;
   --animate-float: float 6s ease-in-out infinite;
-  --animate-runeRotate: runeRotate 30s linear infinite;
+  --animate-runeRotate: runeRotate 35s linear infinite;
+  --animate-bloodPulse: bloodPulse 2.5s ease-in-out infinite;
+  --animate-moonGlow: moonGlow 3.5s ease-in-out infinite alternate;
 
   @keyframes mysticPulse {
-
-    0%,
-    100% {
-      opacity: 0.4;
+    0%, 100% {
+      opacity: 0.45;
     }
-
     50% {
       opacity: 1;
     }
@@ -29,32 +30,49 @@
   @keyframes fadeIn {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(8px);
     }
-
     to {
       opacity: 1;
       transform: translateY(0);
     }
   }
 
+  @keyframes modalPop {
+    0% {
+      opacity: 0;
+      transform: scale(0.94) translateY(12px);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  @keyframes scaleUp {
+    0% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
   @keyframes slowGlow {
     0% {
-      box-shadow: 0 0 8px rgba(255, 255, 255, 0.08), 0 0 20px rgba(255, 255, 255, 0.04);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.06), 0 0 25px rgba(255, 255, 255, 0.03);
     }
-
     100% {
-      box-shadow: 0 0 18px rgba(255, 255, 255, 0.22), 0 0 40px rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 22px rgba(255, 255, 255, 0.2), 0 0 50px rgba(255, 255, 255, 0.08);
     }
   }
 
   @keyframes float {
-
-    0%,
-    100% {
+    0%, 100% {
       transform: translateY(0px);
     }
-
     50% {
       transform: translateY(-6px);
     }
@@ -64,21 +82,34 @@
     from {
       transform: rotate(0deg);
     }
-
     to {
       transform: rotate(360deg);
     }
   }
 
-  --font-heading: 'Cormorant Garamond',
-  'Times New Roman',
-  serif;
-  --font-display: 'Cormorant Garamond',
-  'Times New Roman',
-  serif;
-  --font-body: 'Inter',
-  system-ui,
-  sans-serif;
+  @keyframes bloodPulse {
+    0%, 100% {
+      box-shadow: 0 0 15px rgba(225, 29, 72, 0.25), inset 0 0 10px rgba(225, 29, 72, 0.15);
+      border-color: rgba(225, 29, 72, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 35px rgba(225, 29, 72, 0.55), inset 0 0 20px rgba(225, 29, 72, 0.35);
+      border-color: rgba(225, 29, 72, 0.8);
+    }
+  }
+
+  @keyframes moonGlow {
+    0% {
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.12), 0 0 35px rgba(99, 102, 241, 0.08);
+    }
+    100% {
+      box-shadow: 0 0 30px rgba(245, 158, 11, 0.28), 0 0 60px rgba(99, 102, 241, 0.18);
+    }
+  }
+
+  --font-heading: 'Cormorant Garamond', 'Times New Roman', serif;
+  --font-display: 'Cormorant Garamond', 'Times New Roman', serif;
+  --font-body: 'Inter', system-ui, sans-serif;
 }
 
 @layer utilities {
@@ -185,11 +216,13 @@ body::after {
    ================================================ */
 .gothic-card {
   position: relative;
-  background: #141414;
-  border: 1px solid #3D3D3D;
+  background: rgba(18, 18, 24, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 4px;
   padding: 1.5rem;
-  box-shadow: 0 0 0 1px #222, 0 0 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   overflow: visible;
 }
 
@@ -198,7 +231,7 @@ body::after {
   content: '';
   position: absolute;
   inset: 4px;
-  border: 1px solid #333;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 2px;
   pointer-events: none;
 }
@@ -210,10 +243,8 @@ body::after {
   top: 8px;
   left: 10px;
   font-size: 8px;
-  color: #555;
-  text-shadow:
-
-    calc(100cqw - 20px) 0 0 #444;
+  color: #666;
+  text-shadow: calc(100cqw - 20px) 0 0 #555;
   pointer-events: none;
 }
 
@@ -227,34 +258,38 @@ body::after {
   justify-content: center;
   gap: 0.5rem;
   padding: 0.6rem 1.5rem;
-  background: #111;
+  background: rgba(20, 20, 26, 0.9);
   color: #DDD;
-  border: 1px solid #505050;
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 2px;
   font-family: var(--font-heading);
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   cursor: pointer;
-  transition: all 0.4s ease;
-  box-shadow: 0 0 0 transparent;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .gothic-btn:hover {
   color: #FFF;
-  border-color: #888;
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.08), 0 0 30px rgba(255, 255, 255, 0.03);
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(30, 30, 42, 0.95);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
 }
 
 .gothic-btn:active {
-  transform: scale(0.98);
+  transform: scale(0.97) translateY(0);
 }
 
 .gothic-btn:disabled {
-  opacity: 0.3;
+  opacity: 0.35;
   cursor: not-allowed;
-  border-color: #2A2A2A;
+  border-color: rgba(255, 255, 255, 0.05);
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .gothic-btn:disabled:hover {
@@ -291,15 +326,16 @@ body::after {
    GOTHIC INPUT
    ================================================ */
 .gothic-input {
-  background: #111;
-  border: 1px solid #444;
+  background: rgba(14, 14, 18, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 2px;
-  padding: 0.7rem 1rem;
+  padding: 0.75rem 1rem;
   color: #EEE;
   font-family: var(--font-body);
   font-size: 0.875rem;
-  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   outline: none;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .gothic-input::placeholder {
@@ -308,8 +344,42 @@ body::after {
 }
 
 .gothic-input:focus {
-  border-color: #999;
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(18, 18, 24, 0.95);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.12), inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* ================================================
+   SPECULAR CARD SHEEN (Hiệu ứng vệt sáng quét qua lá bài)
+   ================================================ */
+.card-shine-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 4px;
+  z-index: 15;
+}
+
+.card-shine-overlay::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  left: -60%;
+  width: 220%;
+  height: 220%;
+  background: linear-gradient(
+    60deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.22) 50%,
+    transparent 60%
+  );
+  transform: rotate(25deg) translateX(-100%);
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.group:hover .card-shine-overlay::after {
+  transform: rotate(25deg) translateX(100%);
 }
 
 /* ================================================

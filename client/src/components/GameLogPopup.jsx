@@ -91,31 +91,51 @@ export const GameLogPopup = ({ logs = [], players = [], playerMeta = {}, onClose
     const playerList = players.filter(p => !p.isAdmin);
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}>
-            <div className="gothic-card w-full max-w-2xl max-h-[85vh] flex flex-col relative animate-fadeIn">
-                <button onClick={onClose} className="absolute top-4 right-4 text-white/40 hover:text-white">
-                    <LogOut size={16} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md transition-opacity duration-300">
+            <div className="gothic-card w-full max-w-2xl max-h-[88vh] flex flex-col relative animate-modalPop border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.85)] p-5 sm:p-6">
+                <button 
+                    onClick={onClose} 
+                    aria-label="Đóng"
+                    className="absolute top-4 right-4 p-2 text-white/40 hover:text-rose-400 hover:rotate-90 hover:scale-110 active:scale-95 transition-all duration-300 rounded-full hover:bg-white/5"
+                >
+                    <LogOut size={18} />
                 </button>
-                <h2 className="font-display text-xl text-white/80 tracking-[0.2em] mb-4 text-center pb-4 border-b border-white/10">
-                    NHẬT KÝ QUẢN TRÒ
-                </h2>
-                <div className="overflow-y-auto flex-1 pr-2 space-y-8 custom-scrollbar">
-                    
+                <div className="text-center pb-4 mb-4 border-b border-white/10">
+                    <h2 className="font-display text-lg sm:text-xl text-white tracking-[0.25em] drop-shadow-[0_2px_8px_rgba(255,255,255,0.15)] flex items-center justify-center gap-2">
+                        <span className="w-6 h-[1px] bg-gradient-to-r from-transparent to-red-500/80"></span>
+                        NHẬT KÝ QUẢN TRÒ
+                        <span className="w-6 h-[1px] bg-gradient-to-l from-transparent to-red-500/80"></span>
+                    </h2>
+                    <p className="text-[11px] text-white/40 font-heading tracking-wider mt-1">LỊCH SỬ SỰ KIỆN TOÀN BỘ VÁN ĐẤU</p>
+                </div>
+
+                <div className="overflow-y-auto flex-1 pr-1.5 sm:pr-2 space-y-6 custom-scrollbar">
                     {/* Thêm phần hiển thị danh sách người chơi và vai trò */}
                     {playerList.length > 0 && (
-                        <div className="space-y-2">
-                            <h3 className="text-blue-400/80 font-heading text-sm tracking-wider sticky top-0 bg-[#0a0a0a] py-1 z-10 border-b border-white/5">
-                                ✦ DANH SÁCH VAI TRÒ
+                        <div className="space-y-2.5">
+                            <h3 className="text-indigo-300 font-heading text-xs tracking-widest uppercase sticky top-0 bg-[#121218]/95 backdrop-blur-sm py-1.5 px-2.5 z-10 border-b border-indigo-500/20 rounded flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
+                                DANH SÁCH VAI TRÒ THẬT
                             </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
                                 {playerList.map(p => {
                                     const meta = playerMeta[p.id];
                                     const roleStr = meta?.originalRole || p.role || 'Không rõ';
                                     const isConverted = meta?.isConverted;
+                                    const isWolf = roleStr === 'Sói' || isConverted;
                                     return (
-                                        <div key={p.id} className="flex justify-between items-center text-xs py-2 px-3 border border-white/5 rounded-sm bg-[#111]">
-                                            <span className="text-white/80 font-heading truncate">{p.name}</span>
-                                            <span className={`font-heading ${roleStr === 'Sói' || isConverted ? 'text-red-400/80' : 'text-white/50'}`}>
+                                        <div 
+                                            key={p.id} 
+                                            className={`flex justify-between items-center text-xs py-2 px-3 border rounded transition-colors duration-200 ${
+                                                isWolf 
+                                                    ? 'border-red-500/30 bg-red-950/20 shadow-[0_0_10px_rgba(225,29,72,0.1)]' 
+                                                    : 'border-white/5 bg-white/[0.03] hover:border-white/10'
+                                            }`}
+                                        >
+                                            <span className="text-white/90 font-heading truncate">{p.name}</span>
+                                            <span className={`font-heading text-[11px] font-semibold px-2 py-0.5 rounded ${
+                                                isWolf ? 'text-red-400 bg-red-950/40 border border-red-500/20' : 'text-slate-400 bg-white/5'
+                                            }`}>
                                                 {roleStr} {isConverted && '(Hoá Sói)'}
                                             </span>
                                         </div>
@@ -128,15 +148,25 @@ export const GameLogPopup = ({ logs = [], players = [], playerMeta = {}, onClose
                     {groupedLogs.map((group, idx) => {
                         const validLogs = group.logs.map(formatLog).filter(Boolean);
                         if (validLogs.length === 0) return null;
+                        const isNightGroup = group.title.startsWith('Đêm');
                         
                         return (
                             <div key={idx} className="space-y-2">
-                                <h3 className="text-red-400/80 font-heading text-sm tracking-wider sticky top-0 bg-[#0a0a0a] py-1 z-10 border-b border-white/5">
-                                    ✦ {group.title}
+                                <h3 className={`font-heading text-xs tracking-widest uppercase sticky top-0 bg-[#121218]/95 backdrop-blur-sm py-1.5 px-2.5 z-10 border-b rounded flex items-center gap-2 ${
+                                    isNightGroup 
+                                        ? 'text-indigo-400 border-indigo-500/30' 
+                                        : 'text-amber-400 border-amber-500/30'
+                                }`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${isNightGroup ? 'bg-indigo-400' : 'bg-amber-400'}`}></span>
+                                    {group.title}
                                 </h3>
-                                <div className="space-y-1">
+                                <div className="space-y-1.5 pl-2 sm:pl-3 border-l border-white/10 ml-2">
                                     {validLogs.map((logStr, lIdx) => (
-                                        <div key={lIdx} className="text-white/60 text-xs py-1.5 px-3 border-l-2 border-white/10" style={{ fontFamily: 'var(--font-body)' }}>
+                                        <div 
+                                            key={lIdx} 
+                                            className="text-white/75 text-xs py-1 px-2.5 rounded bg-white/[0.02] hover:bg-white/[0.05] transition-colors leading-relaxed"
+                                            style={{ fontFamily: 'var(--font-body)' }}
+                                        >
                                             {logStr}
                                         </div>
                                     ))}
@@ -145,8 +175,8 @@ export const GameLogPopup = ({ logs = [], players = [], playerMeta = {}, onClose
                         );
                     })}
                     {logs.length === 0 && (
-                        <div className="text-center text-white/30 text-xs italic py-8">
-                            Chưa có sự kiện nào.
+                        <div className="text-center text-white/30 text-xs italic py-10">
+                            Chưa có sự kiện nào được ghi nhận.
                         </div>
                     )}
                 </div>

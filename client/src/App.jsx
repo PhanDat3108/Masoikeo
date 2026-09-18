@@ -267,19 +267,19 @@ function App() {
 
             {/* Game Result Modal */}
             {gameResult && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm animate-fadeIn">
-                    <div className="gothic-card text-center flex flex-col items-center justify-center p-8 max-w-sm w-11/12 border border-white/20">
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md animate-fadeIn">
+                    <div className="gothic-card animate-modalPop text-center flex flex-col items-center justify-center p-8 max-w-sm w-11/12 border border-white/20 shadow-[0_0_50px_rgba(0,0,0,0.9)]">
                         <div className="text-white/30 text-xs tracking-[0.5em] mb-4">— ✦ —</div>
-                        <h2 className={`font-display text-4xl mb-2 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] ${gameResult.isWin ? 'text-[#e0e0e0]' : 'text-red-900/80'}`}>
+                        <h2 className={`font-display text-4xl mb-2 drop-shadow-[0_0_20px_rgba(255,255,255,0.25)] ${gameResult.isWin ? 'text-[#e0e0e0]' : 'text-red-500/90'}`}>
                             {gameResult.message}
                         </h2>
                         {gameResult.teamName && (
-                            <p className="font-heading text-white/50 tracking-[0.2em] mb-8 text-xs leading-relaxed">
+                            <p className="font-heading text-white/60 tracking-[0.2em] mb-8 text-xs leading-relaxed">
                                 {gameResult.teamName === 'HÒA' ? 'VÁN ĐẤU HÒA, KHÔNG AI SỐNG SÓT' : `${gameResult.teamName} GIÀNH CHIẾN THẮNG`}
                             </p>
                         )}
                         <button
-                            className="gothic-btn gothic-btn-primary px-8 py-3 w-full"
+                            className="gothic-btn gothic-btn-primary px-8 py-3 w-full shadow-[0_0_20px_rgba(255,255,255,0.1)]"
                             onClick={() => setGameResult(null)}
                         >
                             ĐÓNG
@@ -292,16 +292,16 @@ function App() {
             <div className="relative z-10 w-full h-full flex">
                 {!playerName ? (
                     /* ===== LOGIN SCREEN ===== */
-                    <div className="m-auto w-full max-w-sm px-6 animate-fadeIn">
-                        <div className="gothic-card text-center" style={{ padding: '2.5rem 2rem' }}>
+                    <div className="m-auto w-full max-w-sm px-6 animate-scaleUp">
+                        <div className="gothic-card text-center shadow-[0_0_60px_rgba(0,0,0,0.85)] border-white/15" style={{ padding: '2.5rem 2rem' }}>
 
                             {/* Decorative top ornament */}
-                            <div className="text-white/20 text-xs tracking-[0.5em] mb-6">— ✦ —</div>
+                            <div className="text-white/30 text-xs tracking-[0.5em] mb-6">— ✦ —</div>
                             <div className="flex justify-center items-center h-36 mb-4">
                                 <img
                                     src="https://i.ibb.co/gkGF615/Chat-GPT-Image-13-46-01-10-thg-7-2026.png"
                                     alt="Logo"
-                                    className="h-full object-contain"
+                                    className="h-full object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.15)] transition-transform duration-500 hover:scale-105"
                                 />
                             </div>
                             {/* Title */}
