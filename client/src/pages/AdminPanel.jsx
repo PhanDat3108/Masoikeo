@@ -32,6 +32,19 @@ export const AdminPanel = () => {
     const handleToggleLife = (id, isAlive) => { requestConfirm(isAlive ? "Giết người chơi này?" : "Hồi sinh người chơi này?", () => socket.emit('toggleLife', id)); };
     const handleTransformToWolf = (id) => { requestConfirm("Biến người chơi này thành Sói?", () => socket.emit('transformToWolf', id)); };
     const handleToggleAutoGM = () => { socket.emit('toggleAutoGM'); };
+    const handleAutoBalance = () => {
+        const targetCount = players.length;
+        if (targetCount === 0) return;
+        const nc = [...configCopy];
+        const danNguIdx = nc.findIndex(r => r.name === 'Dân Ngu');
+        const nonDanCount = nc.reduce((acc, r, i) => i === danNguIdx ? acc : acc + r.count, 0);
+        const neededDan = Math.max(0, targetCount - nonDanCount);
+        if (danNguIdx !== -1) {
+            nc[danNguIdx] = { ...nc[danNguIdx], count: neededDan };
+        }
+        setConfigCopy(nc);
+        socket.emit('updateConfig', nc);
+    };
 
     const updateRoleCount = (index, delta) => {
         const nc = [...configCopy];
@@ -225,9 +238,20 @@ export const AdminPanel = () => {
                     {/* Toolbar */}
                     <div className="flex flex-wrap justify-between items-center mb-4 pb-3 gap-3"
                          style={{ borderBottom: '1px solid #222' }}>
-                        <h2 className="font-heading text-xs text-white/50 tracking-[0.2em]">
-                            NGƯỜI CHƠI · {readyCount}/{players.length}
-                        </h2>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <h2 className="font-heading text-xs text-white/50 tracking-[0.2em]">
+                                NGƯỜI CHƠI · {readyCount}/{players.length}
+                            </h2>
+                            {players.length > 0 && totalCards !== players.length && (
+                                <button 
+                                    onClick={handleAutoBalance}
+                                    title="Tự động thêm/bớt Dân Ngu để đủ số bài bằng số người chơi"
+                                    className="text-[10px] font-heading px-2 py-0.5 rounded bg-amber-950/40 border border-amber-500/30 text-amber-300 hover:bg-amber-900/60 transition-colors flex items-center gap-1"
+                                >
+                                    ⚡ {totalCards < players.length ? `Thiếu ${players.length - totalCards} thẻ` : `Thừa ${totalCards - players.length} thẻ`} (Khớp {players.length} bài)
+                                </button>
+                            )}
+                        </div>
                         <div className="flex gap-2 flex-wrap">
                             <button onClick={() => { setCoupleMode(!coupleMode); setCoupleSelection([]); }}
                                 className={`gothic-btn text-[10px] ${coupleMode ? 'gothic-btn-primary !border-white/50' : ''}`}>
@@ -237,7 +261,7 @@ export const AdminPanel = () => {
                                 className={`gothic-btn text-[10px] ${showEndGame ? 'gothic-btn-primary !border-white/50' : ''}`}>
                                 <Swords size={13} /> KẾT THÚC
                             </button>
-                            <button onClick={handleShuffle} disabled={readyCount !== totalCards || readyCount === 0}
+                            <button onClick={handleShuffle} disabled={players.length === 0}
                                 className="gothic-btn gothic-btn-primary text-[10px]">
                                 CHIA BÀI
                             </button>
@@ -304,10 +328,18 @@ export const AdminPanel = () => {
                     )}
 
                     {/* Warnings */}
-                    {readyCount > 0 && readyCount !== totalCards && (
-                        <div className="mb-3 text-white/30 text-xs flex items-center gap-2 font-heading tracking-wider">
-                            <ShieldAlert size={14} className="text-white/20" /> 
-                            SỐ NGƯỜI ({readyCount}) ≠ SỐ LÁ BÀI ({totalCards})
+                    {players.length > 0 && players.length !== totalCards && (
+                        <div className="mb-3 text-white/40 text-xs flex items-center justify-between font-heading tracking-wider p-2 bg-amber-950/20 border border-amber-500/20 rounded">
+                            <span className="flex items-center gap-2 text-amber-300/80">
+                                <ShieldAlert size={14} /> 
+                                SỐ NGƯỜI CHƠI ({players.length}) ≠ SỐ LÁ BÀI ({totalCards})
+                            </span>
+                            <button 
+                                onClick={handleAutoBalance}
+                                className="text-[10px] underline text-amber-400 hover:text-amber-200"
+                            >
+                                Cân bằng ngay
+                            </button>
                         </div>
                     )}
 

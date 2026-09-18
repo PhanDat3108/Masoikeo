@@ -17,17 +17,19 @@ export const shuffleAndDistributeCards = () => {
         [deck[i], deck[j]] = [deck[j], deck[i]];
     }
 
-    let readyPlayers = gameState.players.filter(p => p.isReady && !p.isAdmin);
+    // Khi Admin bấm chia bài, tất cả người chơi trong phòng (không phải Admin) đều được chia bài
+    let targetPlayers = gameState.players.filter(p => !p.isAdmin);
     
-    readyPlayers.forEach((p, index) => {
+    targetPlayers.forEach((p, index) => {
         p.role = deck[index] || 'Dân Ngu';
         p.isAlive = true; 
+        p.isReady = true;
     });
 
     // === Chống lặp Sói 3 ván liên tiếp ===
     // Tìm người bị gán Sói nhưng đã chơi Sói 2 ván liền trước đó
-    const wolfPlayers = readyPlayers.filter(p => p.role === 'Sói' && (matchData.wolfHistory[p.name] || 0) >= 2);
-    const nonWolfPlayers = readyPlayers.filter(p => p.role !== 'Sói' && (matchData.wolfHistory[p.name] || 0) < 2);
+    const wolfPlayers = targetPlayers.filter(p => p.role === 'Sói' && (matchData.wolfHistory[p.name] || 0) >= 2);
+    const nonWolfPlayers = targetPlayers.filter(p => p.role !== 'Sói' && (matchData.wolfHistory[p.name] || 0) < 2);
 
     for (const wolfPlayer of wolfPlayers) {
         if (nonWolfPlayers.length === 0) break; // Không còn ai để đổi
@@ -45,7 +47,7 @@ export const shuffleAndDistributeCards = () => {
     }
 
     // Cập nhật lịch sử Sói
-    readyPlayers.forEach(p => {
+    targetPlayers.forEach(p => {
         if (p.role === 'Sói') {
             matchData.wolfHistory[p.name] = (matchData.wolfHistory[p.name] || 0) + 1;
         } else {

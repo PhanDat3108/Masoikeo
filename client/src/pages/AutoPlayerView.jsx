@@ -352,7 +352,7 @@ export const AutoPlayerView = () => {
                             </div>
                         )}
                     </div>
-                ) : hasRole && phase === 'CARDS_DEALT' ? (
+                ) : hasRole && (phase === 'CARDS_DEALT' || phase === 'LOBBY' || countdown !== null) ? (
                     /* Giai đoạn xem bài */
                     <div className="w-full flex flex-col items-center space-y-6">
                         <PlayerCard

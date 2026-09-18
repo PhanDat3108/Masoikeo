@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 
 export const useGameStore = create((set) => ({
-    // Session Info - Khôi phục từ localStorage khi F5
-    playerName: localStorage.getItem('masoi_playerName') || '',
-    secretId: localStorage.getItem('masoi_secretId') || '',
-    isAdmin: localStorage.getItem('masoi_isAdmin') === 'true',
+    // Session Info - Khôi phục từ sessionStorage (ưu tiên để test đa tab) hoặc localStorage khi F5
+    playerName: sessionStorage.getItem('masoi_playerName') || localStorage.getItem('masoi_playerName') || '',
+    secretId: sessionStorage.getItem('masoi_secretId') || localStorage.getItem('masoi_secretId') || '',
+    isAdmin: (sessionStorage.getItem('masoi_isAdmin') || localStorage.getItem('masoi_isAdmin')) === 'true',
 
     // Game State from Server
     gameState: { players: [], rolesConfig: [], couple: [] },
@@ -21,16 +21,23 @@ export const useGameStore = create((set) => ({
     
     // Actions
     setSession: (name, secretId, isAdmin = false) => {
+        sessionStorage.setItem('masoi_playerName', name);
+        sessionStorage.setItem('masoi_secretId', secretId);
+        sessionStorage.setItem('masoi_isAdmin', String(isAdmin));
         localStorage.setItem('masoi_playerName', name);
         localStorage.setItem('masoi_secretId', secretId);
         localStorage.setItem('masoi_isAdmin', String(isAdmin));
         set({ playerName: name, secretId, isAdmin, isKicked: false });
     },
     setIsAdmin: (isAdmin) => {
+        sessionStorage.setItem('masoi_isAdmin', String(isAdmin));
         localStorage.setItem('masoi_isAdmin', String(isAdmin));
         set({ isAdmin });
     },
     clearSession: () => {
+        sessionStorage.removeItem('masoi_playerName');
+        sessionStorage.removeItem('masoi_secretId');
+        sessionStorage.removeItem('masoi_isAdmin');
         localStorage.removeItem('masoi_playerName');
         localStorage.removeItem('masoi_secretId');
         localStorage.removeItem('masoi_isAdmin');

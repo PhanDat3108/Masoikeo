@@ -319,17 +319,20 @@ export const startAutoGame = (io) => {
         players: players.map(p => ({ id: p.id, name: p.name, role: p.role })),
     });
 
-    playVoiceAndWait(io, 'deal_cards_prepare', () => {
-        autoGM.phase = PHASES.CARDS_DEALT;
-        broadcastState(io);
-        io.emit('updateMatchCount', matchData.count);
-        io.emit('startCountdown');
+    // Cập nhật phase CARDS_DEALT NGAY LẬP TỨC để client nhận bài và thấy card + countdown
+    autoGM.phase = PHASES.CARDS_DEALT;
+    broadcastState(io);
+    io.emit('updateMatchCount', matchData.count);
+    io.emit('startCountdown');
 
-        // Sau khi chia bài xong (khoảng 1.5s), phát giọng "Xem bài đi"
-        setTimeout(() => {
-            io.emit('autoGM:playAudio', 'check_cards');
-        }, 1500);
-    });
+    // Phát âm thanh chuẩn bị chia bài
+    io.emit('autoGM:playAudio', 'deal_cards_prepare');
+
+    // Sau khi chia bài xong (khoảng 2.6s), phát giọng "Xem bài đi"
+    const prepareDuration = (VOICE_DURATIONS['deal_cards_prepare'] || 2.632) + 0.5;
+    setTimeout(() => {
+        io.emit('autoGM:playAudio', 'check_cards');
+    }, prepareDuration * 1000);
 };
 
 // ================================================
