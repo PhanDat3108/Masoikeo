@@ -44,12 +44,12 @@ export const SkillPopup = ({ role, isOpen, onClose, phase, currentTurnRole, play
 
     const alivePlayers = players.filter(p => !p.isAdmin && p.isAlive && p.id !== myId);
     const allAlive = players.filter(p => !p.isAdmin && p.isAlive);
-    const isMyTurn = currentTurnRole === role || (role === 'Sói' && currentTurnRole === 'Sói');
     const isNight = phase?.startsWith('NIGHT');
     const desc = ROLE_SKILL_DESC[role] || 'Không có mô tả.';
 
     // Kiểm tra role có phải Sói (bao gồm Kẻ bị nguyền đã chuyển)
-    const isWolfRole = role === 'Sói' || (autoGMState?.myMeta?.isConverted && autoGMState?.myMeta?.originalRole === 'Kẻ Bị Nguyền');
+    const isWolfRole = role === 'Sói' || (autoGMState?.myMeta?.isConverted && autoGMState?.myMeta?.originalRole === 'Kẻ Bị Nguyền') || (autoGMState?.myMeta?.team === 'WOLF');
+    const isMyTurn = currentTurnRole === role || (isWolfRole && currentTurnRole === 'Sói');
 
     const handleSubmit = (type, data) => {
         socket.emit('autoGM:submitSkill', { type, ...data });

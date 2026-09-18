@@ -97,13 +97,13 @@ function App() {
             const me = state.gameState.players.find(p => p.id === meId);
             if (!me) return;
 
-            let isWin = winners.includes(meId);
+            const isWin = Array.isArray(winners) ? winners.includes(meId) : false;
             let teamName = "HÒA";
 
             if (winningTeam === 'VILLAGER') teamName = 'PHE DÂN LÀNG';
-            else if (winningTeam === 'WEREWOLF') teamName = 'PHE SÓI';
+            else if (winningTeam === 'WOLF' || winningTeam === 'WEREWOLF') teamName = 'PHE SÓI';
             else if (winningTeam === 'COUPLE') teamName = 'PHE CẶP ĐÔI';
-            else if (winningTeam === 'SIDA_SOLO') teamName = 'SIDA';
+            else if (winningTeam === 'SIDA' || winningTeam === 'SIDA_SOLO') teamName = 'PHE SIDA';
 
             if (me.isAdmin) {
                 setGameResult({ message: `VÁN ĐẤU KẾT THÚC`, teamName, isWin: true });

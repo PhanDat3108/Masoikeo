@@ -151,12 +151,12 @@ export const PlayerView = () => {
 
             {/* Confirm Modal */}
             {confirmAction && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-fadeIn">
-                    <div className="gothic-card text-center flex flex-col items-center justify-center p-6 max-w-xs w-11/12 border border-white/20 shadow-2xl">
-                        <div className="text-white/30 text-[10px] tracking-[0.5em] mb-4">— ✦ —</div>
-                        <h3 className="font-heading text-sm text-white/80 mb-6 leading-relaxed px-2">{confirmAction.message}</h3>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md animate-fadeIn p-4">
+                    <div className="gothic-card text-center flex flex-col items-center justify-center p-6 max-w-xs w-full animate-modalPop border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.9)]">
+                        <div className="text-white/30 text-[10px] tracking-[0.5em] mb-3 font-heading">— XÁC NHẬN —</div>
+                        <h3 className="font-heading text-sm text-white/90 mb-6 leading-relaxed px-2">{confirmAction.message}</h3>
                         <div className="flex gap-3 w-full">
-                            <button onClick={() => setConfirmAction(null)} className="gothic-btn flex-1 py-2 text-xs text-white/50 border-white/20 hover:border-white/40">HUỶ</button>
+                            <button onClick={() => setConfirmAction(null)} className="gothic-btn flex-1 py-2 text-xs text-white/60 hover:text-white border-white/20">HUỶ</button>
                             <button onClick={() => { confirmAction.onConfirm(); setConfirmAction(null); }} className="gothic-btn gothic-btn-danger flex-1 py-2 text-xs">XÁC NHẬN</button>
                         </div>
                     </div>
@@ -165,23 +165,26 @@ export const PlayerView = () => {
 
             {/* Vote Modal */}
             {gameState.vote?.isActive && currentPlayer.isAlive && !hasConfirmedVote && (
-                <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-fadeIn p-4">
-                    <div className="gothic-card w-full max-w-sm flex flex-col max-h-[80vh]">
-                        <div className="text-white/30 text-[10px] tracking-[0.5em] mb-4 text-center">— BỎ PHIẾU KÍN —</div>
-                        <h3 className="font-heading text-lg text-red-500/90 mb-4 text-center drop-shadow-md">CHỌN NGƯỜI BỊ TREO CỔ</h3>
+                <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/85 backdrop-blur-md animate-fadeIn p-4">
+                    <div className="gothic-card w-full max-w-sm flex flex-col max-h-[85vh] animate-modalPop border border-red-500/20 shadow-[0_20px_50px_rgba(0,0,0,0.85)] p-5">
+                        <div className="text-white/30 text-[10px] tracking-[0.4em] mb-2 text-center uppercase font-heading">— BỎ PHIẾU KÍN —</div>
+                        <h3 className="font-heading text-base sm:text-lg text-red-400 mb-4 text-center tracking-wider drop-shadow-[0_2px_8px_rgba(239,68,68,0.2)]">CHỌN NGƯỜI BỊ TREO CỔ</h3>
                         
-                        <div className="overflow-y-auto pr-1 flex-1 space-y-2 mb-4">
+                        <div className="overflow-y-auto pr-1 flex-1 space-y-2 mb-4 custom-scrollbar">
                             {gameState.players.filter(p => p.isAlive && !p.isAdmin).map(p => {
                                 const isMyVote = localVoteId === p.id;
                                 return (
                                     <button 
-                                        key={p.id}
+                                        key={p.id} 
                                         onClick={() => setLocalVoteId(p.id)}
-                                        className={`w-full text-left p-3 flex justify-between items-center transition-all ${isMyVote ? 'bg-red-900/30 border border-red-500/50 text-white' : 'bg-[#111] border border-[#222] text-white/60 hover:bg-[#1a1a1a] hover:text-white/90'}`}
-                                        style={{ borderRadius: '2px' }}
+                                        className={`w-full text-left p-3 rounded flex justify-between items-center transition-all duration-200 ${
+                                            isMyVote 
+                                                ? 'bg-red-950/40 border border-red-500/60 text-white shadow-[0_0_15px_rgba(225,29,72,0.2)] scale-[1.01]' 
+                                                : 'bg-white/[0.03] border border-white/5 text-white/70 hover:bg-white/[0.06] hover:text-white'
+                                        }`}
                                     >
                                         <span className="font-heading text-sm">{p.name}</span>
-                                        {isMyVote && <span className="text-[10px] text-red-400 font-heading">ĐANG CHỌN</span>}
+                                        {isMyVote && <span className="text-[10px] text-red-400 font-heading tracking-wider px-2 py-0.5 rounded bg-red-950/60 border border-red-500/30">ĐANG CHỌN</span>}
                                     </button>
                                 );
                             })}
@@ -192,12 +195,12 @@ export const PlayerView = () => {
                                 socket.emit('submitVote', localVoteId);
                                 setHasConfirmedVote(true);
                             }}
-                            className="gothic-btn gothic-btn-primary w-full py-3 mb-3"
+                            className="gothic-btn gothic-btn-primary w-full py-3 mb-3 text-xs tracking-wider"
                         >
                             XÁC NHẬN VOTE
                         </button>
 
-                        <div className="text-center mt-2">
+                        <div className="text-center mt-1">
                             <p className="text-white/40 text-[10px] italic">Bạn có thể xác nhận ngay mà không chọn ai.</p>
                             <p className="text-white/30 text-[10px] mt-2 font-heading animate-mysticPulse">ĐANG CHỜ QUẢN TRÒ ĐÓNG HÒM PHIẾU...</p>
                         </div>
