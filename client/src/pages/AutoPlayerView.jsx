@@ -40,7 +40,16 @@ export const AutoPlayerView = () => {
 
 
 
-    const currentPlayer = gameState.players.find(p => p.id === socket.id);
+    const serverPlayer = gameState.players.find(p => p.id === socket.id);
+    const currentPlayer = serverPlayer || (playerName ? {
+        id: socket.id || 'syncing',
+        name: playerName,
+        role: '...',
+        isAlive: true,
+        isReady: false,
+        isAdmin: false
+    } : null);
+    const isSynced = Boolean(serverPlayer && socket.connected);
     const hasRole = currentPlayer && currentPlayer.role !== '...';
     const phase = autoGMState?.phase || 'LOBBY';
     const isNight = phase.startsWith('NIGHT') || phase === 'WIN_CHECK_NIGHT';
@@ -132,28 +141,22 @@ export const AutoPlayerView = () => {
         setLocalVoteId(null);
     }, [phase, autoGMState?.dayActions?.isRevote]);
 
-    if (!currentPlayer) {
-        return (
-            <div className="flex flex-col items-center justify-center h-full w-full gap-8 relative">
-                <div className="wolf-loading" style={{ transform: 'scale(0.8)' }}></div>
-                <div className="font-heading text-white/20 text-xs tracking-[0.3em] animate-mysticPulse text-center">
-                    ĐANG KẾT NỐI VỚI<br/>THẾ GIỚI TÂM LINH...
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="flex flex-col items-center justify-between safe-dvh p-3 sm:p-4 relative w-full max-w-md mx-auto animate-fadeIn overflow-x-hidden">
 
             {/* Header Bar - Mobile Optimized */}
             <header className="w-full flex justify-between items-center z-20 py-2 px-3 rounded-full bg-black/60 backdrop-blur-md border border-white/10 shadow-lg">
                 <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${currentPlayer.isAlive ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse'}`}></span>
-                    <span className="font-heading text-white/90 text-xs sm:text-sm tracking-wider font-semibold truncate max-w-[140px] sm:max-w-[180px]">
-                        {currentPlayer.name}
+                    <span className={`w-2 h-2 rounded-full ${!isSynced ? 'bg-amber-400 animate-pulse' : (currentPlayer?.isAlive ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse')}`}></span>
+                    <span className="font-heading text-white/90 text-xs sm:text-sm tracking-wider font-semibold truncate max-w-[130px] sm:max-w-[180px]">
+                        {currentPlayer?.name || playerName}
                     </span>
-                    {!currentPlayer.isAlive && (
+                    {!isSynced && (
+                        <span className="text-[9px] font-heading px-1.5 py-0.5 rounded bg-amber-950/80 border border-amber-500/30 text-amber-300 animate-pulse">
+                            ĐANG KẾT NỐI...
+                        </span>
+                    )}
+                    {isSynced && currentPlayer && !currentPlayer.isAlive && (
                         <span className="text-[10px] font-heading px-1.5 py-0.5 rounded bg-red-950/80 border border-red-500/30 text-red-300">
                             VONG HỒN
                         </span>

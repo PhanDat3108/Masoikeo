@@ -43,7 +43,7 @@ function App() {
         ...ROLES_CONFIG.map(r => r.imageUrl),
         ...CUSTOM_ROLE_IMAGES
     ];
-    const imagesLoaded = usePreloadImages(allImages);
+    const [imagesLoaded, skipPreload] = usePreloadImages(allImages);
 
     // Mở khóa âm thanh ở lần tương tác (click/chạm) đầu tiên của người dùng
     useEffect(() => {
@@ -262,6 +262,14 @@ function App() {
                 <div className="font-display text-xs text-white/30 animate-mysticPulse tracking-[0.4em] mt-4">
                     ĐANG THỨC TỈNH...
                 </div>
+
+                <button
+                    type="button"
+                    onClick={skipPreload}
+                    className="mt-2 px-4 py-1.5 rounded-full border border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/5 text-[11px] font-heading text-white/40 hover:text-white/80 tracking-widest transition-all cursor-pointer"
+                >
+                    VÀO NGAY ➜
+                </button>
             </div>
         );
     }
