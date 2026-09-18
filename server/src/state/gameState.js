@@ -13,7 +13,7 @@ export const gameState = {
     players: [],
     couple: [],
     timerEndTime: null,
-    isAutoGM: true,
+    isAutoGM: false,
     vote: {
         isActive: false,
         votes: {} // { voterId: votedPlayerId }

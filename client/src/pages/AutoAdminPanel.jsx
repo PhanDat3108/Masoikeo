@@ -83,20 +83,6 @@ export const AutoAdminPanel = () => {
     const handleUpdateSettings = () => {
         socket.emit('autoGM:updateSettings', settings);
     };
-    const handleAutoBalance = () => {
-        const targetCount = players.length;
-        if (targetCount === 0) return;
-        const nc = [...configCopy];
-        const danNguIdx = nc.findIndex(r => r.name === 'Dân Ngu');
-        const nonDanCount = nc.reduce((acc, r, i) => i === danNguIdx ? acc : acc + r.count, 0);
-        const neededDan = Math.max(0, targetCount - nonDanCount);
-        if (danNguIdx !== -1) {
-            nc[danNguIdx] = { ...nc[danNguIdx], count: neededDan };
-        }
-        setConfigCopy(nc);
-        socket.emit('updateConfig', nc);
-    };
-
     const handleStartGame = () => {
         requestConfirm("Chia bài và bắt đầu?", () => { socket.emit('autoGM:startGame'); setIsLogClosed(false); });
     };
@@ -298,24 +284,13 @@ export const AutoAdminPanel = () => {
                 <div className="lg:col-span-2 gothic-card flex flex-col min-h-0">
                     <div className="flex flex-wrap justify-between items-center mb-4 pb-3 gap-3"
                          style={{ borderBottom: '1px solid #222' }}>
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <h2 className="font-heading text-xs text-white/50 tracking-[0.2em] flex items-center gap-2">
-                                <Users size={12} /> NGƯỜI CHƠI · {readyCount}/{players.length}
-                            </h2>
-                            {players.length > 0 && totalCards !== players.length && (
-                                <button 
-                                    onClick={handleAutoBalance}
-                                    title="Tự động thêm/bớt Dân Ngu để đủ số bài bằng số người chơi"
-                                    className="text-[10px] font-heading px-2 py-0.5 rounded bg-amber-950/40 border border-amber-500/30 text-amber-300 hover:bg-amber-900/60 transition-colors flex items-center gap-1"
-                                >
-                                    ⚡ {totalCards < players.length ? `Thiếu ${players.length - totalCards} thẻ` : `Thừa ${totalCards - players.length} thẻ`} (Khớp {players.length} bài)
-                                </button>
-                            )}
-                        </div>
+                        <h2 className="font-heading text-xs text-white/50 tracking-[0.2em] flex items-center gap-2">
+                            <Users size={12} /> NGƯỜI CHƠI · {readyCount}/{players.length}
+                        </h2>
                         <div className="flex gap-2">
                             {phase === 'LOBBY' && (
                                 <button onClick={handleStartGame}
-                                    disabled={players.length === 0}
+                                    disabled={readyCount !== totalCards || readyCount === 0}
                                     className="gothic-btn gothic-btn-primary text-[10px]">
                                     CHIA BÀI
                                 </button>
