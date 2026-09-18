@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { socket } from '../socket.js';
 import { useGameStore } from '../store/useGameStore.js';
-import { LogOut, Skull, Heart, UserMinus, ShieldAlert, Plus, Trash2, Pencil, Check, X, HeartHandshake, Swords, Trophy } from 'lucide-react';
+import { LogOut, Skull, Heart, UserMinus, ShieldAlert, Plus, Trash2, Pencil, Check, X, HeartHandshake, Swords, Trophy, Users } from 'lucide-react';
 
 export const AdminPanel = () => {
     const gameState = useGameStore(state => state.gameState);
@@ -15,6 +15,7 @@ export const AdminPanel = () => {
     const [coupleMode, setCoupleMode] = useState(false);
     const [coupleSelection, setCoupleSelection] = useState([]);
     const [showEndGame, setShowEndGame] = useState(false);
+    const [mobileTab, setMobileTab] = useState('players'); // 'players' | 'deck'
 
     React.useEffect(() => {
         setConfigCopy([...gameState.rolesConfig]);
@@ -132,10 +133,35 @@ export const AdminPanel = () => {
                 </div>
             </div>
 
+            {/* Mobile Tab Navigation */}
+            <div className="flex lg:hidden w-full gap-1 mb-4 p-1 rounded-lg bg-black/60 border border-white/10 backdrop-blur-md shrink-0">
+                <button
+                    onClick={() => setMobileTab('players')}
+                    className={`flex-1 py-2 text-xs font-heading tracking-wider flex items-center justify-center gap-1.5 rounded transition-all ${
+                        mobileTab === 'players'
+                            ? 'bg-white/15 text-white border border-white/20 shadow-md font-semibold'
+                            : 'text-white/40 hover:text-white/70'
+                    }`}
+                >
+                    <Users size={13} />
+                    <span>NGƯỜI CHƠI ({readyCount}/{players.length})</span>
+                </button>
+                <button
+                    onClick={() => setMobileTab('deck')}
+                    className={`flex-1 py-2 text-xs font-heading tracking-wider flex items-center justify-center gap-1.5 rounded transition-all ${
+                        mobileTab === 'deck'
+                            ? 'bg-white/15 text-white border border-white/20 shadow-md font-semibold'
+                            : 'text-white/40 hover:text-white/70'
+                    }`}
+                >
+                    <span>🃏 BỘ BÀI ({totalCards})</span>
+                </button>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 flex-1 min-h-0">
                 
                 {/* ===== CỘT TRÁI: Cấu hình bộ bài ===== */}
-                <div className="lg:col-span-1 flex flex-col gap-4">
+                <div className={`lg:col-span-1 flex flex-col gap-4 ${mobileTab === 'deck' ? 'flex' : 'hidden lg:flex'}`}>
                     <div className="gothic-card">
                         <h2 className="font-heading text-xs text-white/50 tracking-[0.2em] mb-4 pb-2"
                             style={{ borderBottom: '1px solid #222' }}>
@@ -164,17 +190,17 @@ export const AdminPanel = () => {
                                             </button>
                                         </div>
                                     )}
-                                    <div className="flex items-center gap-2 shrink-0">
+                                    <div className="flex items-center gap-1.5 shrink-0">
                                         <button onClick={() => updateRoleCount(idx, -1)}
-                                            className="w-6 h-6 flex items-center justify-center text-white/30 hover:text-white transition-colors"
-                                            style={{ border: '1px solid #333', borderRadius: '2px', background: '#0A0A0A', fontSize: '14px' }}>−</button>
-                                        <span className="w-4 text-center font-heading text-white/70 text-xs">{role.count}</span>
+                                            className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white transition-colors active:scale-95"
+                                            style={{ border: '1px solid #333', borderRadius: '2px', background: '#0A0A0A', fontSize: '16px' }}>−</button>
+                                        <span className="w-5 text-center font-heading text-white/80 text-xs font-semibold">{role.count}</span>
                                         <button onClick={() => updateRoleCount(idx, 1)}
-                                            className="w-6 h-6 flex items-center justify-center text-white/30 hover:text-white transition-colors"
-                                            style={{ border: '1px solid #333', borderRadius: '2px', background: '#0A0A0A', fontSize: '14px' }}>+</button>
+                                            className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white transition-colors active:scale-95"
+                                            style={{ border: '1px solid #333', borderRadius: '2px', background: '#0A0A0A', fontSize: '16px' }}>+</button>
                                         <button onClick={() => removeRole(idx)} title="Xóa"
-                                            className="text-white/10 hover:text-white/60 opacity-0 group-hover:opacity-100 transition-all ml-1">
-                                            <Trash2 size={12} />
+                                            className="text-white/10 hover:text-white/60 opacity-0 group-hover:opacity-100 transition-all ml-1 p-1">
+                                            <Trash2 size={13} />
                                         </button>
                                     </div>
                                 </div>
@@ -186,9 +212,9 @@ export const AdminPanel = () => {
                             <input type="text" placeholder="Tên role mới..." value={newRoleName}
                                 onChange={(e) => setNewRoleName(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && addCustomRole()}
-                                className="gothic-input flex-1 text-xs py-1.5 px-3" />
+                                className="gothic-input flex-1 text-xs py-2 px-3" />
                             <button onClick={addCustomRole} disabled={!newRoleName.trim()}
-                                className="gothic-btn text-[10px] px-3 py-1.5 flex items-center gap-1">
+                                className="gothic-btn text-[10px] px-3 py-2 flex items-center gap-1">
                                 <Plus size={12} /> THÊM
                             </button>
                         </div>
@@ -221,7 +247,7 @@ export const AdminPanel = () => {
                 </div>
 
                 {/* ===== CỘT PHẢI: Người chơi ===== */}
-                <div className="lg:col-span-2 gothic-card flex flex-col min-h-0">
+                <div className={`lg:col-span-2 gothic-card flex flex-col min-h-0 ${mobileTab === 'players' ? 'flex' : 'hidden lg:flex'}`}>
                     {/* Toolbar */}
                     <div className="flex flex-wrap justify-between items-center mb-4 pb-3 gap-3"
                          style={{ borderBottom: '1px solid #222' }}>
@@ -360,42 +386,53 @@ export const AdminPanel = () => {
                                     style={{ background: bgColor, border: `1px solid ${borderColor}`, borderRadius: '2px' }}>
                                     
                                     {/* Info Left */}
-                                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        <div className="flex items-center gap-1 w-24 shrink-0">
-                                            <span className={`font-heading text-xs tracking-wider truncate ${p.isAlive ? 'text-white/70' : 'text-white/30 line-through'}`}>
+                                    <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 flex-wrap sm:flex-nowrap">
+                                        <div className="flex items-center gap-1 min-w-[80px] max-w-[130px] shrink-0">
+                                            <span className={`font-heading text-xs sm:text-sm tracking-wider truncate ${p.isAlive ? 'text-white/85 font-semibold' : 'text-white/30 line-through'}`}>
                                                 {p.name}
                                             </span>
-                                            {isInCouple && <span className="text-white/30 text-[10px]" title="Cặp đôi">✧✧</span>}
+                                            {isInCouple && <span className="text-pink-400 text-xs" title="Cặp đôi">💕</span>}
                                         </div>
                                         
-                                        <div className="text-[10px] text-white/25 flex items-center gap-1.5 w-20 shrink-0" style={{ fontFamily: 'var(--font-body)' }}>
-                                            <span className={`w-1 h-1 rounded-full inline-block ${p.isReady ? 'bg-white/50' : 'bg-white/10'}`}></span>
-                                            {p.isReady ? "Sẵn sàng" : "Đang chờ"}
+                                        <div className="shrink-0">
+                                            <span className={`text-[10px] font-heading px-2 py-0.5 rounded flex items-center gap-1.5 ${
+                                                p.isReady 
+                                                    ? 'bg-emerald-950/60 border border-emerald-500/30 text-emerald-300' 
+                                                    : 'bg-white/5 border border-white/10 text-white/40'
+                                            }`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${p.isReady ? 'bg-emerald-400 animate-pulse' : 'bg-white/20'}`}></span>
+                                                {p.isReady ? "SẴN SÀNG" : "CHỜ"}
+                                            </span>
                                         </div>
 
-                                        <div className="font-heading text-[10px] text-white/40 tracking-wider truncate flex-1">
-                                            {p.role}
+                                        <div className="font-heading text-[11px] text-amber-300/80 tracking-wider truncate shrink-0 sm:flex-1">
+                                            {p.role !== '...' ? p.role : ''}
                                         </div>
                                     </div>
                                     
                                     {/* Actions Right */}
-                                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-2">
                                         {!coupleMode && p.role === 'Kẻ Bị Nguyền' && p.isAlive && (
                                             <button onClick={(e) => { e.stopPropagation(); handleTransformToWolf(p.id); }}
-                                                className="text-white/20 hover:text-white/60 p-1 transition-colors" title="Biến thành Sói"
-                                                style={{ fontSize: '12px' }}>𖤐</button>
+                                                className="w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-300 border border-red-500/30 bg-red-950/20 rounded active:scale-95 transition-all" title="Biến thành Sói">
+                                                𖤐
+                                            </button>
                                         )}
                                         {!coupleMode && (
                                             <button onClick={(e) => { e.stopPropagation(); handleToggleLife(p.id, p.isAlive); }}
-                                                className="text-white/20 hover:text-white/60 p-1 transition-colors"
+                                                className={`w-8 h-8 flex items-center justify-center rounded border transition-all active:scale-95 ${
+                                                    p.isAlive 
+                                                        ? 'text-white/40 hover:text-red-400 border-white/10 hover:border-red-500/30 bg-black/40' 
+                                                        : 'text-emerald-400 border-emerald-500/40 bg-emerald-950/20'
+                                                }`}
                                                 title={p.isAlive ? "Giết" : "Hồi sinh"}>
-                                                {p.isAlive ? <Skull size={14} /> : <Heart size={14} />}
+                                                {p.isAlive ? <Skull size={15} /> : <Heart size={15} />}
                                             </button>
                                         )}
                                         {!coupleMode && (
                                             <button onClick={(e) => { e.stopPropagation(); handleKick(p.id); }}
-                                                className="text-white/10 hover:text-white/50 p-1 transition-colors" title="Kick">
-                                                <UserMinus size={14} />
+                                                className="w-8 h-8 flex items-center justify-center text-white/30 hover:text-rose-400 border border-white/10 hover:border-rose-500/30 bg-black/40 rounded active:scale-95 transition-all" title="Kick">
+                                                <UserMinus size={15} />
                                             </button>
                                         )}
                                     </div>
@@ -404,11 +441,14 @@ export const AdminPanel = () => {
                         })}
                         
                         {players.length === 0 && (
-                            <div className="col-span-full py-12 text-center">
-                                <div className="text-white/10 text-3xl mb-3">☽</div>
-                                <div className="text-white/20 text-xs font-heading tracking-[0.2em] italic">
-                                    CHƯA CÓ NGƯỜI CHƠI
+                            <div className="py-12 px-4 text-center">
+                                <div className="text-white/15 text-4xl mb-3 animate-pulse">☽</div>
+                                <div className="text-white/50 text-xs font-heading tracking-[0.25em] uppercase mb-1">
+                                    CHƯA CÓ NGƯỜI CHƠI THAM GIA
                                 </div>
+                                <p className="text-white/30 text-[11px] max-w-xs mx-auto mt-2" style={{ fontFamily: 'var(--font-body)' }}>
+                                    Bảo bạn bè vào web và nhập tên để hiển thị tại đây.
+                                </p>
                             </div>
                         )}
                     </div>

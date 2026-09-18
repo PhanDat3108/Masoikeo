@@ -53,6 +53,7 @@ export const AutoAdminPanel = () => {
     const [confirmAction, setConfirmAction] = useState(null);
     const [isLogClosed, setIsLogClosed] = useState(false);
     const [showLiveLog, setShowLiveLog] = useState(false);
+    const [mobileTab, setMobileTab] = useState('players'); // 'players' | 'deck' | 'settings'
 
     React.useEffect(() => {
         setConfigCopy([...gameState.rolesConfig]);
@@ -205,13 +206,49 @@ export const AutoAdminPanel = () => {
                 </div>
             )}
 
+            {/* Mobile Tab Navigation */}
+            <div className="flex lg:hidden w-full gap-1 mb-4 p-1 rounded-lg bg-black/60 border border-white/10 backdrop-blur-md shrink-0">
+                <button 
+                    onClick={() => setMobileTab('players')}
+                    className={`flex-1 py-2 text-xs font-heading tracking-wider flex items-center justify-center gap-1.5 rounded transition-all ${
+                        mobileTab === 'players' 
+                            ? 'bg-white/15 text-white border border-white/20 shadow-md font-semibold' 
+                            : 'text-white/40 hover:text-white/70'
+                    }`}
+                >
+                    <Users size={13} />
+                    <span>NGƯỜI CHƠI ({readyCount}/{players.length})</span>
+                </button>
+                <button 
+                    onClick={() => setMobileTab('deck')}
+                    className={`flex-1 py-2 text-xs font-heading tracking-wider flex items-center justify-center gap-1.5 rounded transition-all ${
+                        mobileTab === 'deck' 
+                            ? 'bg-white/15 text-white border border-white/20 shadow-md font-semibold' 
+                            : 'text-white/40 hover:text-white/70'
+                    }`}
+                >
+                    <span>🃏 BỘ BÀI ({totalCards})</span>
+                </button>
+                <button 
+                    onClick={() => setMobileTab('settings')}
+                    className={`flex-1 py-2 text-xs font-heading tracking-wider flex items-center justify-center gap-1.5 rounded transition-all ${
+                        mobileTab === 'settings' 
+                            ? 'bg-white/15 text-white border border-white/20 shadow-md font-semibold' 
+                            : 'text-white/40 hover:text-white/70'
+                    }`}
+                >
+                    <Settings size={13} />
+                    <span>CÀI ĐẶT</span>
+                </button>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 flex-1 min-h-0">
                 
                 {/* ===== CỘT TRÁI: Cấu hình & Settings ===== */}
-                <div className="lg:col-span-1 flex flex-col gap-4">
+                <div className={`lg:col-span-1 flex flex-col gap-4 ${mobileTab !== 'players' ? 'flex' : 'hidden lg:flex'}`}>
 
                     {/* Settings thời gian */}
-                    <div className="gothic-card">
+                    <div className={`gothic-card ${mobileTab === 'settings' ? 'block' : 'hidden lg:block'}`}>
                         <h2 className="font-heading text-xs text-white/50 tracking-[0.2em] mb-4 pb-2 flex items-center gap-2"
                             style={{ borderBottom: '1px solid #222' }}>
                             <Settings size={12} /> CÀI ĐẶT THỜI GIAN
@@ -231,7 +268,7 @@ export const AutoAdminPanel = () => {
                     </div>
 
                     {/* Cấu hình bộ bài */}
-                    <div className="gothic-card">
+                    <div className={`gothic-card ${mobileTab === 'deck' ? 'block' : 'hidden lg:block'}`}>
                         <h2 className="font-heading text-xs text-white/50 tracking-[0.2em] mb-4 pb-2"
                             style={{ borderBottom: '1px solid #222' }}>
                             BỘ BÀI · {totalCards} LÁ
@@ -241,14 +278,14 @@ export const AutoAdminPanel = () => {
                                 <div key={idx} className="flex justify-between items-center px-3 py-2"
                                      style={{ background: '#111', border: '1px solid #1A1A1A', borderRadius: '2px' }}>
                                     <span className="text-white/60 text-sm truncate" style={{ fontFamily: 'var(--font-body)' }}>{role.name}</span>
-                                    <div className="flex items-center gap-2 shrink-0">
+                                    <div className="flex items-center gap-1.5 shrink-0">
                                         <button onClick={() => updateRoleCount(idx, -1)} disabled={isInGame}
-                                            className="w-6 h-6 flex items-center justify-center text-white/30 hover:text-white transition-colors"
-                                            style={{ border: '1px solid #333', borderRadius: '2px', background: '#0A0A0A', fontSize: '14px' }}>−</button>
-                                        <span className="w-4 text-center font-heading text-white/70 text-xs">{role.count}</span>
+                                            className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white transition-colors active:scale-95 disabled:opacity-30"
+                                            style={{ border: '1px solid #333', borderRadius: '2px', background: '#0A0A0A', fontSize: '16px' }}>−</button>
+                                        <span className="w-5 text-center font-heading text-white/80 text-xs font-semibold">{role.count}</span>
                                         <button onClick={() => updateRoleCount(idx, 1)} disabled={isInGame}
-                                            className="w-6 h-6 flex items-center justify-center text-white/30 hover:text-white transition-colors"
-                                            style={{ border: '1px solid #333', borderRadius: '2px', background: '#0A0A0A', fontSize: '14px' }}>+</button>
+                                            className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white transition-colors active:scale-95 disabled:opacity-30"
+                                            style={{ border: '1px solid #333', borderRadius: '2px', background: '#0A0A0A', fontSize: '16px' }}>+</button>
                                     </div>
                                 </div>
                             ))}
@@ -260,7 +297,7 @@ export const AutoAdminPanel = () => {
 
                     {/* Leaderboard */}
                     {Object.keys(leaderboard).length > 0 && (
-                        <div className="gothic-card">
+                        <div className={`gothic-card ${mobileTab !== 'players' ? 'block' : 'hidden lg:block'}`}>
                             <h2 className="font-heading text-xs text-white/50 tracking-[0.2em] mb-3 pb-2 flex items-center gap-2"
                                 style={{ borderBottom: '1px solid #222' }}>
                                 <Trophy size={12} /> BẢNG XẾP HẠNG
@@ -281,7 +318,7 @@ export const AutoAdminPanel = () => {
                 </div>
 
                 {/* ===== CỘT PHẢI: Người chơi & Điều khiển ===== */}
-                <div className="lg:col-span-2 gothic-card flex flex-col min-h-0">
+                <div className={`lg:col-span-2 gothic-card flex flex-col min-h-0 ${mobileTab === 'players' ? 'flex' : 'hidden lg:flex'}`}>
                     <div className="flex flex-wrap justify-between items-center mb-4 pb-3 gap-3"
                          style={{ borderBottom: '1px solid #222' }}>
                         <h2 className="font-heading text-xs text-white/50 tracking-[0.2em] flex items-center gap-2">
@@ -314,22 +351,26 @@ export const AutoAdminPanel = () => {
                     <div className="space-y-1.5 overflow-y-auto flex-1 pr-1">
                         {players.map(p => (
                             <div key={p.id}
-                                className={`p-2 px-3 flex items-center justify-between transition-all ${!p.isAlive ? 'opacity-40' : ''}`}
+                                className={`p-2.5 px-3 flex items-center justify-between transition-all rounded ${!p.isAlive ? 'opacity-40' : ''}`}
                                 style={{ 
                                     background: '#111', 
-                                    border: `1px solid ${p.isAlive ? '#1A1A1A' : '#1A1A1A'}`, 
+                                    border: '1px solid #1A1A1A', 
                                     borderRadius: '2px' 
                                 }}>
-                                <div className="flex items-center gap-3">
-                                    <span className={`font-heading text-xs tracking-wider ${p.isAlive ? 'text-white/70' : 'text-white/30 line-through'}`}>
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <span className={`font-heading text-xs sm:text-sm tracking-wider truncate ${p.isAlive ? 'text-white/85 font-semibold' : 'text-white/30 line-through'}`}>
                                         {p.name}
                                     </span>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 shrink-0">
                                     {/* Trạng thái Ready (trước khi game bắt đầu) */}
                                     {!isInGame && !isCardsDealt && (
-                                        <span className="text-[10px] text-white/25 font-heading flex items-center gap-1">
-                                            <span className={`w-1.5 h-1.5 rounded-full ${p.isReady ? 'bg-white/50' : 'bg-white/10'}`}></span>
+                                        <span className={`text-[10px] font-heading px-2 py-0.5 rounded flex items-center gap-1.5 ${
+                                            p.isReady 
+                                                ? 'bg-emerald-950/60 border border-emerald-500/30 text-emerald-300' 
+                                                : 'bg-white/5 border border-white/10 text-white/40'
+                                        }`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${p.isReady ? 'bg-emerald-400 animate-pulse' : 'bg-white/20'}`}></span>
                                             {p.isReady ? 'SẴN SÀNG' : 'CHỜ'}
                                         </span>
                                     )}
@@ -337,14 +378,18 @@ export const AutoAdminPanel = () => {
                                     {(isInGame || isCardsDealt) && (
                                         <span className="flex items-center gap-1 text-[10px] font-heading">
                                             {p.isAlive ? (
-                                                <><Heart size={10} className="text-white/30" /> <span className="text-white/40">SỐNG</span></>
+                                                <span className="px-2 py-0.5 rounded bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 flex items-center gap-1">
+                                                    <Heart size={10} className="text-emerald-400" /> SỐNG
+                                                </span>
                                             ) : (
-                                                <><Skull size={10} className="text-white/20" /> <span className="text-white/20">CHẾT</span></>
+                                                <span className="px-2 py-0.5 rounded bg-red-950/40 border border-red-500/30 text-red-300 flex items-center gap-1">
+                                                    <Skull size={10} className="text-red-400" /> CHẾT
+                                                </span>
                                             )}
                                         </span>
                                     )}
                                     {/* Nút Kick */}
-                                    <button onClick={() => handleKick(p.id, p.name)} className="text-red-500/60 hover:text-red-400 ml-3 text-[9px] font-heading px-1.5 py-0.5 border border-red-500/30 rounded-sm" title="Đuổi người chơi khỏi phòng">
+                                    <button onClick={() => handleKick(p.id, p.name)} className="text-red-400/70 hover:text-red-300 ml-1 text-[10px] font-heading px-2 py-1 border border-red-500/30 rounded bg-red-950/20 active:scale-95 transition-all" title="Đuổi người chơi khỏi phòng">
                                         KICK
                                     </button>
                                 </div>
@@ -352,11 +397,14 @@ export const AutoAdminPanel = () => {
                         ))}
                         
                         {players.length === 0 && (
-                            <div className="py-12 text-center">
-                                <div className="text-white/10 text-3xl mb-3">☽</div>
-                                <div className="text-white/20 text-xs font-heading tracking-[0.2em] italic">
-                                    CHƯA CÓ NGƯỜI CHƠI
+                            <div className="py-12 px-4 text-center">
+                                <div className="text-white/15 text-4xl mb-3 animate-pulse">☽</div>
+                                <div className="text-white/50 text-xs font-heading tracking-[0.25em] uppercase mb-1">
+                                    CHƯA CÓ NGƯỜI CHƠI THAM GIA
                                 </div>
+                                <p className="text-white/30 text-[11px] max-w-xs mx-auto mt-2" style={{ fontFamily: 'var(--font-body)' }}>
+                                    Bảo bạn bè vào web và nhập tên để hiển thị tại đây.
+                                </p>
                             </div>
                         )}
                     </div>
