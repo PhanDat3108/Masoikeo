@@ -9,32 +9,9 @@ import { ROLES_CONFIG, GAME_ASSETS, CUSTOM_ROLE_IMAGES } from './constants/roles
 import { VOICE_FILES } from './constants/voiceLines.js';
 import { usePreloadImages } from './hooks/usePreloadImages.js';
 import { v4 as uuidv4 } from 'uuid';
+import { audioRefs, unlockAudio, playVoice, stopVoice, playSfx, stopSfx } from './utils/audio.js';
 
-export const audioRefs = {
-    flip: new Audio('/card-flip.mp3')
-};
-
-// Khởi tạo các audio objects từ VOICE_FILES
-Object.entries(VOICE_FILES).forEach(([key, filename]) => {
-    audioRefs[key] = new Audio(`/${filename}`);
-    if (key === 'sfx_ticking') {
-        audioRefs[key].loop = true;
-    }
-});
-
-const unlockAudio = () => {
-    Object.values(audioRefs).forEach(audio => {
-        audio.volume = 0;
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-            playPromise.then(() => {
-                audio.pause();
-                audio.currentTime = 0;
-                audio.volume = 1;
-            }).catch(() => {});
-        }
-    });
-};
+export { audioRefs };
 
 function App() {
     const playerName = useGameStore(state => state.playerName);
@@ -141,55 +118,33 @@ function App() {
         });
 
         socket.on('autoGM:playAudio', (voiceKey) => {
-            // Dừng mọi âm thanh voice khác trước khi phát
-            Object.keys(VOICE_FILES).forEach(key => {
-                // Không dừng sfx nếu đang phát
-                if (!key.startsWith('sfx_')) {
-                    const audio = audioRefs[key];
-                    if (audio) {
-                        audio.pause();
-                        audio.currentTime = 0;
-                    }
-                }
-            });
-
-            if (audioRefs[voiceKey]) {
-                audioRefs[voiceKey].volume = 1;
-                audioRefs[voiceKey].play().catch(() => {});
+            if (voiceKey.startsWith('sfx_')) {
+                playSfx(voiceKey);
+            } else {
+                playVoice(voiceKey);
             }
         });
 
         socket.on('autoGM:stopAudio', (voiceKey) => {
-            if (audioRefs[voiceKey]) {
-                audioRefs[voiceKey].pause();
-                audioRefs[voiceKey].currentTime = 0;
+            if (voiceKey.startsWith('sfx_')) {
+                stopSfx(voiceKey);
+            } else {
+                stopVoice(voiceKey);
             }
         });
 
         const onStartCountdown = () => {
             setCountdown(5);
             let timeLeft = 5;
-
-            if (audioRefs['sfx_ticking']) {
-                audioRefs['sfx_ticking'].volume = 1;
-                audioRefs['sfx_ticking'].play().catch(e => console.log('Audio error:', e));
-            }
+            playSfx('sfx_ticking');
 
             const timer = setInterval(() => {
                 timeLeft--;
                 if (timeLeft <= 0) {
                     clearInterval(timer);
                     setCountdown(null);
-                    
-                    if (audioRefs['sfx_ticking']) {
-                        audioRefs['sfx_ticking'].pause();
-                        audioRefs['sfx_ticking'].currentTime = 0;
-                    }
-
-                    if (audioRefs['sfx_wolf_howl']) {
-                        audioRefs['sfx_wolf_howl'].volume = 1;
-                        audioRefs['sfx_wolf_howl'].play().catch(e => console.log('Audio error:', e));
-                    }
+                    stopSfx('sfx_ticking');
+                    playSfx('sfx_wolf_howl');
                 } else {
                     setCountdown(timeLeft);
                 }
@@ -197,10 +152,7 @@ function App() {
         };
 
         const onPlayWolfHowl = () => {
-            if (audioRefs['sfx_wolf_howl']) {
-                audioRefs['sfx_wolf_howl'].volume = 1;
-                audioRefs['sfx_wolf_howl'].play().catch(e => console.log('Audio error:', e));
-            }
+            playSfx('sfx_wolf_howl');
         };
 
         const onConnect = () => {
@@ -221,11 +173,7 @@ function App() {
             setPhaseTransition(transition);
             // Phát âm thanh khi chuyển phase
             if (transition.to === 'NIGHT') {
-                audioRefs.howl.volume = 1;
-                audioRefs.howl.play().catch(() => {});
-            } else if (transition.to === 'DAY') {
-                // TODO: Thêm âm thanh gà gáy khi có file
-                // Tạm thời dùng sound khác hoặc bỏ qua
+                playSfx('sfx_wolf_howl');
             }
         };
 
@@ -285,11 +233,7 @@ function App() {
         setSession(inputName, newSecret, isAdm);
 
         // Phát tiếng sói hú khi người chơi click tham gia
-        if (audioRefs['sfx_wolf_howl']) {
-            audioRefs['sfx_wolf_howl'].volume = 1;
-            audioRefs['sfx_wolf_howl'].currentTime = 0;
-            audioRefs['sfx_wolf_howl'].play().catch(() => {});
-        }
+        playSfx('sfx_wolf_howl');
     };
 
     if (!imagesLoaded) {

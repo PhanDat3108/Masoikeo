@@ -4,6 +4,7 @@ import {
     startAutoGame, beginGame, handleSkillSubmit, handleDayVote,
     handleHunterAim, handleHunterShot, pauseGame, resumeGame,
     updateSettings, stopAutoGame, skipPhase, getAutoGMStateForClient,
+    handlePlayerReconnect, broadcastState,
 } from './autoGMEngine.js';
 import { autoGM } from '../state/autoGameState.js';
 
@@ -31,8 +32,21 @@ export const registerHandlers = (io, socket) => {
         // 1. KIỂM TRA RECONNECT
         let playerBySecret = gameState.players.find(p => p.secretId === secretId);
         if (playerBySecret) {
+            const oldId = playerBySecret.id;
             playerBySecret.id = socket.id;
             playerBySecret.name = finalName; // Cập nhật tên lỡ họ gõ tên khác
+
+            // Cập nhật couple trong gameState nếu có
+            if (Array.isArray(gameState.couple)) {
+                gameState.couple = gameState.couple.map(id => id === oldId ? socket.id : id);
+            }
+
+            // Đồng bộ dữ liệu AutoGM khi reconnect
+            if (gameState.isAutoGM) {
+                handlePlayerReconnect(oldId, socket.id);
+                socket.emit('autoGM:stateUpdate', getAutoGMStateForClient(socket.id));
+            }
+
             io.emit('updateState', gameState);
             return; 
         }
@@ -89,7 +103,11 @@ export const registerHandlers = (io, socket) => {
     socket.on('toggleAutoGM', () => {
         if (checkAdmin(socket.id)) {
             gameState.isAutoGM = !gameState.isAutoGM;
-            io.emit('updateState', gameState);
+            if (gameState.isAutoGM) {
+                broadcastState(io);
+            } else {
+                io.emit('updateState', gameState);
+            }
         }
     });
 

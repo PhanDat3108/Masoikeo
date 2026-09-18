@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { playSfx, stopSfx } from '../utils/audio.js';
 
 // =============================================
 // POPUPS TỔNG KẾT
@@ -8,24 +9,10 @@ export const DayAnnouncePopup = ({ deathMessages }) => {
     const [countdown, setCountdown] = useState(5);
 
     useEffect(() => {
-        let isMounted = true;
-        import('../App.jsx').then(({ audioRefs }) => {
-            if (isMounted && audioRefs.ticking) {
-                audioRefs.ticking.volume = 1;
-                audioRefs.ticking.play().catch(() => { });
-            }
-        });
-
         const interval = setInterval(() => {
             setCountdown(c => {
                 if (c <= 1) {
                     clearInterval(interval);
-                    import('../App.jsx').then(({ audioRefs }) => {
-                        if (audioRefs.ticking) {
-                            audioRefs.ticking.pause();
-                            audioRefs.ticking.currentTime = 0;
-                        }
-                    });
                     return 0;
                 }
                 return c - 1;
@@ -33,14 +20,7 @@ export const DayAnnouncePopup = ({ deathMessages }) => {
         }, 1000);
 
         return () => {
-            isMounted = false;
             clearInterval(interval);
-            import('../App.jsx').then(({ audioRefs }) => {
-                if (audioRefs.ticking) {
-                    audioRefs.ticking.pause();
-                    audioRefs.ticking.currentTime = 0;
-                }
-            });
         };
     }, []);
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { socket } from '../socket.js';
 import { useGameStore } from '../store/useGameStore.js';
-import { LogOut, Play, Pause, Square, SkipForward, Settings, Users, Skull, Heart, Trophy, X } from 'lucide-react';
+import { LogOut, Play, Pause, Square, SkipForward, Settings, Users, Skull, Heart, Trophy, X, FileText } from 'lucide-react';
 import { DayAnnouncePopup, DayExecutePopup } from '../components/DayPopups.jsx';
 import { GameLogPopup } from '../components/GameLogPopup.jsx';
 
@@ -52,6 +52,7 @@ export const AutoAdminPanel = () => {
 
     const [confirmAction, setConfirmAction] = useState(null);
     const [isLogClosed, setIsLogClosed] = useState(false);
+    const [showLiveLog, setShowLiveLog] = useState(false);
 
     React.useEffect(() => {
         setConfigCopy([...gameState.rolesConfig]);
@@ -105,6 +106,9 @@ export const AutoAdminPanel = () => {
     const [timeLeftStr, setTimeLeftStr] = useState('');
     React.useEffect(() => {
         if (autoGMState?.phaseEndTime) {
+            if (autoGMState?.isPaused) {
+                return;
+            }
             const interval = setInterval(() => {
                 const diff = autoGMState.phaseEndTime - Date.now();
                 if (diff <= 0) {
@@ -120,7 +124,7 @@ export const AutoAdminPanel = () => {
         } else {
             setTimeLeftStr('');
         }
-    }, [autoGMState?.phaseEndTime]);
+    }, [autoGMState?.phaseEndTime, autoGMState?.isPaused]);
 
     return (
         <div className="flex flex-col h-full p-4 md:p-6 max-w-6xl mx-auto w-full overflow-y-auto animate-fadeIn">
@@ -138,6 +142,9 @@ export const AutoAdminPanel = () => {
                     </p>
                 </div>
                 <div className="flex gap-2">
+                    <button onClick={() => setShowLiveLog(true)} className="gothic-btn flex items-center gap-1.5 text-xs text-white/70 hover:text-white" title="Xem nhật ký trận đấu">
+                        <FileText size={14} /> NHẬT KÝ
+                    </button>
                     <button onClick={handleToggleAutoGM} 
                         className="gothic-btn flex items-center gap-2 text-xs gothic-btn-primary !border-white/50">
                         QUẢN TRÒ: TỰ ĐỘNG
@@ -371,13 +378,13 @@ export const AutoAdminPanel = () => {
                 </div>
             )}
 
-            {/* Game Log Popup (Chỉ hiện khi GAME OVER) */}
-            {autoGMState?.phase === 'GAME_OVER' && !isLogClosed && (
+            {/* Game Log Popup (Hiện khi GAME OVER hoặc khi bấm nút NHẬT KÝ) */}
+            {(showLiveLog || (autoGMState?.phase === 'GAME_OVER' && !isLogClosed)) && (
                 <GameLogPopup 
                     logs={autoGMState?.gameLog || []} 
                     players={gameState.players}
                     playerMeta={autoGMState?.playerMeta || {}}
-                    onClose={() => setIsLogClosed(true)} 
+                    onClose={() => { setIsLogClosed(true); setShowLiveLog(false); }} 
                 />
             )}
 

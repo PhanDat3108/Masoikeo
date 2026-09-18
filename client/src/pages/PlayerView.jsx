@@ -3,6 +3,7 @@ import { socket } from '../socket.js';
 import { useGameStore } from '../store/useGameStore.js';
 import { PlayerCard } from '../components/PlayerCard.jsx';
 import { LogOut } from 'lucide-react';
+import { audioRefs } from '../utils/audio.js';
 
 export const PlayerView = () => {
     const playerName = useGameStore(state => state.playerName);
@@ -98,11 +99,9 @@ export const PlayerView = () => {
                             isFlipped={isFlipped}
                             onClick={() => {
                                 setIsFlipped(!isFlipped);
-                                if (!isFlipped) {
-                                    import('../App.jsx').then(({ audioRefs }) => {
-                                        audioRefs.flip.volume = 1;
-                                        audioRefs.flip.play().catch(e => console.log('Audio error:', e));
-                                    });
+                                if (!isFlipped && audioRefs.flip) {
+                                    audioRefs.flip.volume = 1;
+                                    audioRefs.flip.play().catch(e => console.log('Audio error:', e));
                                 }
                             }}
                             countdown={countdown}

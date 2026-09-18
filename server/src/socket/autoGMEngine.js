@@ -47,7 +47,7 @@ export const getAutoGMStateForClient = (socketId) => {
                 votes: autoGM.dayActions.votes,
                 executedPlayer: autoGM.dayActions.executedPlayer,
             },
-            gameLog: autoGM.gameLog.slice(-20), // 20 log gần nhất
+            gameLog: autoGM.gameLog.slice(-100), // 100 log gần nhất
         };
     }
 
@@ -208,13 +208,85 @@ const playVoiceAndWait = (io, voiceKey, callback) => {
 // BROADCAST — Gửi state cho tất cả client
 // ================================================
 
-const broadcastState = (io) => {
+export const broadcastState = (io) => {
     // Gửi gameState chung (players, rolesConfig, etc.)
     io.emit('updateState', gameState);
 
     // Gửi autoGM state riêng cho mỗi client (đã lọc)
     for (const [socketId, socket] of io.sockets.sockets) {
         socket.emit('autoGM:stateUpdate', getAutoGMStateForClient(socketId));
+    }
+};
+
+/**
+ * Xử lý khi người chơi F5 / Reconnect với socket ID mới
+ */
+export const handlePlayerReconnect = (oldSocketId, newSocketId) => {
+    if (!oldSocketId || !newSocketId || oldSocketId === newSocketId) return;
+
+    // 1. autoGM.playerMeta
+    if (autoGM.playerMeta && autoGM.playerMeta[oldSocketId]) {
+        autoGM.playerMeta[newSocketId] = autoGM.playerMeta[oldSocketId];
+        delete autoGM.playerMeta[oldSocketId];
+    }
+
+    // 2. autoGM.couple
+    if (Array.isArray(autoGM.couple)) {
+        autoGM.couple = autoGM.couple.map(id => id === oldSocketId ? newSocketId : id);
+    }
+
+    // 3. autoGM.nightActions
+    if (autoGM.nightActions) {
+        if (autoGM.nightActions.wolfTarget === oldSocketId) autoGM.nightActions.wolfTarget = newSocketId;
+        if (autoGM.nightActions.seerTarget === oldSocketId) autoGM.nightActions.seerTarget = newSocketId;
+        if (autoGM.nightActions.guardTarget === oldSocketId) autoGM.nightActions.guardTarget = newSocketId;
+        if (autoGM.nightActions.lastGuardTarget === oldSocketId) autoGM.nightActions.lastGuardTarget = newSocketId;
+        if (autoGM.nightActions.witchHealTarget === oldSocketId) autoGM.nightActions.witchHealTarget = newSocketId;
+        if (autoGM.nightActions.witchKillTarget === oldSocketId) autoGM.nightActions.witchKillTarget = newSocketId;
+        if (autoGM.nightActions.hunterTarget === oldSocketId) autoGM.nightActions.hunterTarget = newSocketId;
+        if (Array.isArray(autoGM.nightActions.cupidTargets)) {
+            autoGM.nightActions.cupidTargets = autoGM.nightActions.cupidTargets.map(id => id === oldSocketId ? newSocketId : id);
+        }
+        if (autoGM.nightActions.wolfVotes) {
+            if (autoGM.nightActions.wolfVotes[oldSocketId]) {
+                autoGM.nightActions.wolfVotes[newSocketId] = autoGM.nightActions.wolfVotes[oldSocketId];
+                delete autoGM.nightActions.wolfVotes[oldSocketId];
+            }
+            for (const key of Object.keys(autoGM.nightActions.wolfVotes)) {
+                if (autoGM.nightActions.wolfVotes[key] === oldSocketId) {
+                    autoGM.nightActions.wolfVotes[key] = newSocketId;
+                }
+            }
+        }
+    }
+
+    // 4. autoGM.dayActions
+    if (autoGM.dayActions) {
+        if (Array.isArray(autoGM.dayActions.deaths)) {
+            autoGM.dayActions.deaths = autoGM.dayActions.deaths.map(id => id === oldSocketId ? newSocketId : id);
+        }
+        if (Array.isArray(autoGM.dayActions.deathMessages)) {
+            autoGM.dayActions.deathMessages.forEach(dm => {
+                if (dm.playerId === oldSocketId) dm.playerId = newSocketId;
+            });
+        }
+        if (autoGM.dayActions.executedPlayer === oldSocketId) {
+            autoGM.dayActions.executedPlayer = newSocketId;
+        }
+        if (Array.isArray(autoGM.dayActions.revoteTargets)) {
+            autoGM.dayActions.revoteTargets = autoGM.dayActions.revoteTargets.map(id => id === oldSocketId ? newSocketId : id);
+        }
+        if (autoGM.dayActions.votes) {
+            if (autoGM.dayActions.votes[oldSocketId]) {
+                autoGM.dayActions.votes[newSocketId] = autoGM.dayActions.votes[oldSocketId];
+                delete autoGM.dayActions.votes[oldSocketId];
+            }
+            for (const key of Object.keys(autoGM.dayActions.votes)) {
+                if (autoGM.dayActions.votes[key] === oldSocketId) {
+                    autoGM.dayActions.votes[key] = newSocketId;
+                }
+            }
+        }
     }
 };
 
@@ -936,7 +1008,26 @@ export const checkWinCondition = () => {
     const aliveWolves = alive.filter(p => isWolf(p.id));
     const aliveVillagers = alive.filter(p => !isWolf(p.id));
 
-    // Sida thắng: Kiểm tra riêng tại lúc vote treo (không kiểm tra ở đây)
+    // Không còn ai sống sót -> HÒA
+    if (alive.length === 0) {
+        return { winner: 'DRAW', reason: 'Tất cả mọi người đều đã chết' };
+    }
+
+    // Phe Couple thắng: Chỉ còn 2 người yêu (khác phe) sống sót cuối cùng
+    if (autoGM.couple.length === 2 && alive.length === 2) {
+        const [l1, l2] = autoGM.couple;
+        const meta1 = autoGM.playerMeta[l1];
+        const meta2 = autoGM.playerMeta[l2];
+        const p1 = gameState.players.find(p => p.id === l1);
+        const p2 = gameState.players.find(p => p.id === l2);
+
+        if (p1?.isAlive && p2?.isAlive && meta1 && meta2) {
+            // Nếu khác phe → phe couple thắng riêng
+            if (meta1.team !== meta2.team) {
+                return { winner: TEAMS.COUPLE, reason: 'Cặp đôi khác phe là 2 người sống sót cuối cùng' };
+            }
+        }
+    }
 
     // Phe Sói thắng: Số sói >= số dân
     if (aliveWolves.length >= aliveVillagers.length && aliveWolves.length > 0) {
@@ -946,25 +1037,6 @@ export const checkWinCondition = () => {
     // Phe Dân thắng: Tất cả Sói chết
     if (aliveWolves.length === 0) {
         return { winner: TEAMS.VILLAGER, reason: 'Tất cả Sói đã chết' };
-    }
-
-    // Phe Couple thắng: Chỉ còn 2 người yêu (khác phe)
-    if (autoGM.couple.length === 2) {
-        const [l1, l2] = autoGM.couple;
-        const meta1 = autoGM.playerMeta[l1];
-        const meta2 = autoGM.playerMeta[l2];
-        const p1 = gameState.players.find(p => p.id === l1);
-        const p2 = gameState.players.find(p => p.id === l2);
-
-        if (p1?.isAlive && p2?.isAlive && meta1 && meta2) {
-            // Nếu khác phe → phe couple
-            if (meta1.team !== meta2.team) {
-                if (alive.length === 2) {
-                    return { winner: TEAMS.COUPLE, reason: 'Cặp đôi khác phe là 2 người sống sót cuối cùng' };
-                }
-            }
-            // Nếu cùng phe → thắng theo phe (đã kiểm tra ở trên)
-        }
     }
 
     return null; // Chưa có ai thắng
@@ -1517,6 +1589,8 @@ const endGame = (io, result) => {
 
     if (result.winner === TEAMS.SIDA) {
         playVoiceAndWait(io, 'win_sida', finishGame);
+    } else if (result.winner === 'DRAW') {
+        finishGame();
     } else {
         playVoiceAndWait(io, 'win_announce', () => {
             let voiceKey = 'win_villager';
@@ -1537,8 +1611,14 @@ export const pauseGame = (io) => {
     autoGM.isPaused = true;
 
     if (autoGM.phaseEndTime && autoGM.phaseTimer) {
-        autoGM.pausedTimeRemaining = autoGM.phaseEndTime - Date.now();
-        clearPhaseTimer();
+        autoGM.pausedTimeRemaining = Math.max(0, autoGM.phaseEndTime - Date.now());
+        clearTimeout(autoGM.phaseTimer);
+        autoGM.phaseTimer = null;
+        if (autoGM.warningTimer) {
+            clearTimeout(autoGM.warningTimer);
+            autoGM.warningTimer = null;
+        }
+        // Giữ lại autoGM.phaseTimeoutCallback để resumeGame có thể gọi tiếp
     }
 
     addGameLog('ADMIN_PAUSE', {});
@@ -1550,9 +1630,33 @@ export const resumeGame = (io) => {
     autoGM.isPaused = false;
 
     // Phục hồi timer nếu có
-    if (autoGM.pausedTimeRemaining && autoGM.pausedTimeRemaining > 0) {
-        autoGM.phaseEndTime = Date.now() + autoGM.pausedTimeRemaining;
-        // Không thể phục hồi chính xác callback — nhưng đủ cho MVP
+    if (autoGM.pausedTimeRemaining && autoGM.pausedTimeRemaining > 0 && autoGM.phaseTimeoutCallback) {
+        const remainingMs = autoGM.pausedTimeRemaining;
+        autoGM.phaseEndTime = Date.now() + remainingMs;
+        const remainingSec = remainingMs / 1000;
+
+        if (remainingSec >= 15) {
+            autoGM.warningTimer = setTimeout(() => {
+                if (!autoGM.isPaused && autoGM.phaseTimer) {
+                    io.emit('autoGM:playAudio', '10s_warning');
+                }
+            }, (remainingSec - 10) * 1000);
+        }
+
+        const cb = autoGM.phaseTimeoutCallback;
+        autoGM.phaseTimer = setTimeout(() => {
+            autoGM.phaseTimer = null;
+            autoGM.phaseEndTime = null;
+            autoGM.phaseTimeoutCallback = null;
+
+            if (autoGM.isPaused) return;
+
+            addGameLog('TIMEOUT', { phase: autoGM.phase, role: autoGM.currentTurnRole });
+            if (cb) {
+                cb();
+            }
+        }, remainingMs);
+
         autoGM.pausedTimeRemaining = null;
     }
 

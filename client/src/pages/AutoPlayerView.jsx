@@ -6,6 +6,7 @@ import { SkillPopup, SeerResultPopup } from '../components/SkillPopup.jsx';
 import { GameLogPopup } from '../components/GameLogPopup.jsx';
 import { DayAnnouncePopup, DayExecutePopup } from '../components/DayPopups.jsx';
 import { LogOut } from 'lucide-react';
+import { audioRefs } from '../utils/audio.js';
 
 // Mô tả kỹ năng ngắn cho hiển thị trên card
 const ROLE_SHORT_DESC = {
@@ -66,6 +67,9 @@ export const AutoPlayerView = () => {
     const [timeLeftStr, setTimeLeftStr] = useState('');
     useEffect(() => {
         if (autoGMState?.phaseEndTime) {
+            if (autoGMState?.isPaused) {
+                return;
+            }
             const interval = setInterval(() => {
                 const diff = autoGMState.phaseEndTime - Date.now();
                 if (diff <= 0) {
@@ -81,7 +85,7 @@ export const AutoPlayerView = () => {
         } else {
             setTimeLeftStr('');
         }
-    }, [autoGMState?.phaseEndTime]);
+    }, [autoGMState?.phaseEndTime, autoGMState?.isPaused]);
 
     // Reset flip khi ván mới
     useEffect(() => {
@@ -123,14 +127,10 @@ export const AutoPlayerView = () => {
 
     // Vote ban ngày
     const [localVoteId, setLocalVoteId] = useState(null);
-    const [hasConfirmedVote, setHasConfirmedVote] = useState(false);
 
     useEffect(() => {
-        if (phase !== 'DAY_VOTE') {
-            setLocalVoteId(null);
-            setHasConfirmedVote(false);
-        }
-    }, [phase]);
+        setLocalVoteId(null);
+    }, [phase, autoGMState?.dayActions?.isRevote]);
 
     if (!currentPlayer) {
         return (
@@ -183,6 +183,11 @@ export const AutoPlayerView = () => {
                         {phase === 'DAY_ANNOUNCE' && (
                             <span className="text-white/40 text-[10px] font-heading tracking-wider">CÔNG BỐ</span>
                         )}
+                        {autoGMState?.isPaused && (
+                            <span className="text-yellow-400/80 text-[10px] font-heading border border-yellow-500/30 px-1.5 py-0.5 rounded animate-mysticPulse">
+                                ⏸ TẠM DỪNG
+                            </span>
+                        )}
                         {timeLeftStr ? (
                             <span className="font-heading text-sm text-white/50">{timeLeftStr}</span>
                         ) : (
@@ -210,7 +215,7 @@ export const AutoPlayerView = () => {
             )}
 
             {/* Death overlay */}
-            {!currentPlayer.isAlive && !hideDeathOverlay && (
+            {!currentPlayer.isAlive && !hideDeathOverlay && !(phase === 'DAY_HUNTER_CHECK' && currentTurnRole === 'Thợ săn' && autoGMState?.myMeta?.originalRole === 'Thợ săn') && (
                 <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center p-4 animate-fadeIn"
                     style={{ background: 'rgba(0,0,0,0.92)' }}>
                     <div className="text-white/10 text-6xl mb-4 animate-pulse">☠</div>
@@ -316,11 +321,9 @@ export const AutoPlayerView = () => {
                             isFlipped={isFlipped}
                             onClick={() => {
                                 setIsFlipped(!isFlipped);
-                                if (!isFlipped) {
-                                    import('../App.jsx').then(({ audioRefs }) => {
-                                        audioRefs.flip.volume = 1;
-                                        audioRefs.flip.play().catch(() => {});
-                                    });
+                                if (!isFlipped && audioRefs.flip) {
+                                    audioRefs.flip.volume = 1;
+                                    audioRefs.flip.play().catch(() => {});
                                 }
                             }}
                             countdown={countdown}
@@ -356,39 +359,71 @@ export const AutoPlayerView = () => {
             </div>
 
             {/* ===== VOTE BAN NGÀY ===== */}
-            {phase === 'DAY_VOTE' && currentPlayer.isAlive && !hasConfirmedVote && (
+            {phase === 'DAY_VOTE' && currentPlayer.isAlive && !hasVoted && (
                 <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-fadeIn p-4">
-                    <div className="gothic-card w-full max-w-sm flex flex-col max-h-[80vh]">
-                        <div className="text-white/30 text-[10px] tracking-[0.5em] mb-4 text-center">— BỎ PHIẾU —</div>
-                        <h3 className="font-heading text-lg text-red-500/90 mb-4 text-center drop-shadow-md">CHỌN NGƯỜI BỊ TREO CỔ</h3>
-                        
-                        <div className="overflow-y-auto pr-1 flex-1 space-y-2 mb-4">
-                            {gameState.players.filter(p => p.isAlive && !p.isAdmin).map(p => {
-                                const isMyVote = localVoteId === p.id;
-                                return (
-                                    <button 
-                                        key={p.id}
-                                        onClick={() => setLocalVoteId(p.id)}
-                                        className={`w-full text-left p-3 flex justify-between items-center transition-all ${isMyVote ? 'bg-red-900/30 border border-red-500/50 text-white' : 'bg-[#111] border border-[#222] text-white/60 hover:bg-[#1a1a1a] hover:text-white/90'}`}
-                                        style={{ borderRadius: '2px' }}
-                                    >
-                                        <span className="font-heading text-sm">{p.name}</span>
-                                        {isMyVote && <span className="text-[10px] text-red-400 font-heading">ĐANG CHỌN</span>}
-                                    </button>
-                                );
-                            })}
+                    <div className="gothic-card w-full max-w-sm flex flex-col max-h-[85vh]">
+                        <div className="text-white/30 text-[10px] tracking-[0.5em] mb-3 text-center">
+                            {autoGMState?.dayActions?.isRevote ? '— BỎ PHIẾU LẠI (HÒA PHIẾU) —' : '— BỎ PHIẾU BAN NGÀY —'}
                         </div>
+                        <h3 className="font-heading text-lg text-red-500/90 mb-3 text-center drop-shadow-md">
+                            {autoGMState?.dayActions?.isRevote ? 'CHỌN 1 TRONG CÁC ỨNG VIÊN HÒA' : 'CHỌN NGƯỜI BỊ TREO CỔ'}
+                        </h3>
+                        
+                        {autoGMState?.dayActions?.isRevote && autoGMState?.dayActions?.revoteTargets?.includes(socket.id) ? (
+                            <div className="p-4 my-6 text-center border border-yellow-500/20 bg-yellow-500/5 rounded">
+                                <p className="text-yellow-200/80 text-xs font-heading mb-2">BẠN ĐANG TRONG DANH SÁCH BỊ HÒA PHIẾU</p>
+                                <p className="text-white/40 text-xs" style={{ fontFamily: 'var(--font-body)' }}>
+                                    Bạn không được quyền tham gia bỏ phiếu trong lượt biểu quyết lại này.
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="overflow-y-auto pr-1 flex-1 space-y-2 mb-4">
+                                    {gameState.players
+                                        .filter(p => {
+                                            if (!p.isAlive || p.isAdmin || p.id === socket.id) return false;
+                                            if (autoGMState?.dayActions?.isRevote) {
+                                                return autoGMState?.dayActions?.revoteTargets?.includes(p.id);
+                                            }
+                                            return true;
+                                        })
+                                        .map(p => {
+                                            const isSelected = localVoteId === p.id;
+                                            return (
+                                                <button 
+                                                    key={p.id}
+                                                    onClick={() => setLocalVoteId(p.id)}
+                                                    className={`w-full text-left p-3 flex justify-between items-center transition-all ${isSelected ? 'bg-red-900/30 border border-red-500/50 text-white' : 'bg-[#111] border border-[#222] text-white/60 hover:bg-[#1a1a1a] hover:text-white/90'}`}
+                                                    style={{ borderRadius: '2px' }}
+                                                >
+                                                    <span className="font-heading text-sm">{p.name}</span>
+                                                    {isSelected && <span className="text-[10px] text-red-400 font-heading">ĐANG CHỌN</span>}
+                                                </button>
+                                            );
+                                        })}
+                                </div>
 
-                        <button 
-                            onClick={() => {
-                                socket.emit('autoGM:dayVote', localVoteId);
-                                setHasConfirmedVote(true);
-                            }}
-                            className="gothic-btn gothic-btn-primary w-full py-3 mb-3"
-                        >
-                            XÁC NHẬN VOTE
-                        </button>
-                        <p className="text-white/30 text-[10px] text-center italic">Bạn có thể xác nhận mà không chọn ai.</p>
+                                <div className="flex gap-2 mb-2">
+                                    <button 
+                                        onClick={() => socket.emit('autoGM:dayVote', 'skip')}
+                                        className="gothic-btn flex-1 py-2.5 text-xs text-white/50 hover:text-white border border-white/10"
+                                    >
+                                        BỎ QUA / TRẮNG
+                                    </button>
+                                    <button 
+                                        onClick={() => {
+                                            if (localVoteId) {
+                                                socket.emit('autoGM:dayVote', localVoteId);
+                                            }
+                                        }}
+                                        disabled={!localVoteId}
+                                        className="gothic-btn gothic-btn-primary flex-1 py-2.5 text-xs"
+                                    >
+                                        CHỐT PHIẾU
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             )}
@@ -468,7 +503,7 @@ const HunterShotPopup = ({ players, myId }) => {
     const alivePlayers = players.filter(p => !p.isAdmin && p.isAlive && p.id !== myId);
 
     return (
-        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-fadeIn p-4">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-fadeIn p-4">
             <div className="gothic-card w-full max-w-sm flex flex-col max-h-[85vh]">
                 <div className="text-center mb-4">
                     <div className="text-white/30 text-xs tracking-[0.5em] mb-2">— ✦ —</div>
